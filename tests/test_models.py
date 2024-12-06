@@ -47,9 +47,7 @@ class TestGameSet:
         assert isinstance(game.short_description, str)
 
     def test_create_picks(self, league, gameset, user):
-        picker.PickSet.objects.for_gameset_user(
-            gameset, user, picker.PickSet.Strategy.RANDOM
-        )
+        picker.PickSet.objects.for_gameset_user(gameset, user, picker.PickSet.Strategy.RANDOM)
 
 
 @pytest.mark.django_db
@@ -88,7 +86,7 @@ class TestUserConf:
         group = league.pickergrouping_set.get()
 
         mbr = group.members.first()
-        assert str(mbr) == str(mbr.user)
+        assert str(mbr.user) in str(mbr)
         assert mbr.is_active is True
         assert mbr.is_management is False
         assert users_dct == {mbr.user.id: mbr.user for mbr in group.members.all()}

@@ -3,7 +3,7 @@
 {% block main_content %}
 <h1>Your roster memberships</h1>
 <ul>{% for mbr in memberships %}
-    <li><a href="{% url 'picker-roster' league.slug mbr.group.id %}">{{ mbr.group }}</a></li>
+    <li><a href="{% url 'picker-roster-group' league.slug mbr.group.id %}">{{ mbr.group }}</a></li>
     {% endfor %}
 </ul>
 {% endblock main_content %}

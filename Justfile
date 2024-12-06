@@ -62,7 +62,12 @@ retest:
 
 # Run all tox tests
 tox *args='':
-    {{BIN}}/tox "$@"
+    #!/usr/bin/env bash
+    if [ -z "${args}" ]; then
+        {{BIN}}/tox
+    else
+        {{BIN}}/tox "$@"
+    fi
 
 # Run coverage report from test suite
 cov:

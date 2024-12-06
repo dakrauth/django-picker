@@ -1,9 +1,9 @@
 {% extends league_base %}
 {% block title %}Manage Game Management{% endblock %}
 {% block main_content %}
-    <h1 class="bg-danger">{{ game.away }} @ {{ game.home }}</h1>
+    <h1 class="bg-danger">{{ instance.away }} @ {{ instance.home }}</h1>
     <p>
-        Week {{ game.gameset.sequence }} &middot; {{ game.start_time }}
+        Week {{ instance.instanceset.sequence }} &middot; {{ game.start_time }}
     </p>
     {% load django_bootstrap5 %}
     <form method="post">{% csrf_token %}

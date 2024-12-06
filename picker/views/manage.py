@@ -45,7 +45,7 @@ class ManageWeek(SimpleFormMixin, ManagementViewBase):
     @cached_property
     def gameset(self):
         return get_object_or_404(
-            GameSetPicks, league=self.league, season=self.season, sequence=self.args[0]
+            GameSetPicks, league=self.league, season=self.season, sequence=self.kwargs["sequence"]
         )
 
     def get_context_data(self, **kwargs):
@@ -77,7 +77,7 @@ class ManageGame(SimpleFormMixin, ManagementViewBase):
 
     @cached_property
     def game(self):
-        return get_object_or_404(Game, pk=self.args[0])
+        return get_object_or_404(Game, pk=self.kwargs["game_id"])
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(instance=self.game, **kwargs)

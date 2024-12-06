@@ -73,9 +73,7 @@ def gameset(league, now):
         closes=now + timedelta(days=6),
     )
     for away, home in [["GRF", "HUF"], ["RVN", "SLY"]]:
-        gs.games.create(
-            home=teams[home], away=teams[away], start_time=now, location="Hogwards"
-        )
+        gs.games.create(home=teams[home], away=teams[away], start_time=now, location="Hogwards")
     return gs
 
 
@@ -138,16 +136,12 @@ def superuser(client, grouping):
 
 @pytest.fixture
 def user(grouping):
-    return _make_mbr(
-        User.objects.create_user("user1", "user1@example.com", "password"), grouping
-    )
+    return _make_mbr(User.objects.create_user("user1", "user1@example.com", "password"), grouping)
 
 
 @pytest.fixture
 def user2(grouping):
-    return _make_mbr(
-        User.objects.create_user("user2", "user2@example.com", "password"), grouping
-    )
+    return _make_mbr(User.objects.create_user("user2", "user2@example.com", "password"), grouping)
 
 
 @pytest.fixture

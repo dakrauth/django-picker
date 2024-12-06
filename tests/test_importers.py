@@ -35,9 +35,7 @@ class TestImporters:
     def test_management_commands(self):
         call_command("import_picks", "tests/quidditch.json")
         data = load_json("quidditch.json")
-        data["season"]["gamesets"][0].update(
-            opens="2018-08-18T00:30Z", closes="2018-09-07T12:00Z"
-        )
+        data["season"]["gamesets"][0].update(opens="2018-08-18T00:30Z", closes="2018-09-07T12:00Z")
         league = picker.League.get("hq")
         gs = league.gamesets.first()
         opens, closes = gs.opens, gs.closes

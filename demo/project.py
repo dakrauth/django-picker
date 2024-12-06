@@ -1,7 +1,7 @@
 from pathlib import Path
 from django import forms
 from django.conf import settings
-from django.urls import include, re_path
+from django.urls import include, path
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.shortcuts import render
@@ -18,19 +18,19 @@ def home(request):
     return render(
         request,
         "picker/home.html",
-        {"leagues": leagues, "users": User.objects.all(), "groups": PickerGrouping.objects.all()}
+        {"leagues": leagues, "users": User.objects.all(), "groups": PickerGrouping.objects.all()},
     )
 
 
-urlpatterns = static(
-    "/static/", document_root=Path(admin.__file__).parent / "static", show_indexes=True
-) + [
-    re_path(r"^$", home, name="demo-home"),
-    re_path(r"^admin/", admin.site.urls),
-    re_path(r"^accounts/", include("django.contrib.auth.urls")),
-    re_path(r"^(?P<league>\w+)/", include("picker.urls")),
-] + static(
-    settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, show_indexes=True
+urlpatterns = (
+    static("/static/", document_root=Path(admin.__file__).parent / "static", show_indexes=True)
+    + [
+        path("", home, name="demo-home"),
+        path("admin/", admin.site.urls),
+        path("account/", include("django.contrib.auth.urls")),
+        path("<slug:league>/", include("picker.urls")),
+    ]
+    + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, show_indexes=True)
 )
 
 

@@ -2,11 +2,11 @@
 {% block title %}NFL {{ season }}{% endblock %}
 {% block main_content %}
 <h1>{{ league }} {{ season }} Schedule</h1>
-<nav class="season-nav">
-    <ul class="pagination">
-        <li class="disabled"><a href="#">Weeks:</a></li>{% for gs,games in gamesets %}
-        <li>
-            <a href="#week-{{ gs.sequence }}">{{ gs.sequence }}</a>
+<nav>
+    <ul class="pagination pagination-sm">
+        <li class="page-item disabled"><a class="page-link" href="#">Weeks:</a></li>{% for gs,games in gamesets %}
+        <li class="page-item">
+            <a class="page-link" href="#week-{{ gs.sequence }}">{{ gs.sequence }}</a>
         </li> {% endfor %}
     </ul>
 </nav>

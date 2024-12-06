@@ -1,29 +1,38 @@
-from django.urls import include, re_path
+from django.urls import include, path
+from django.urls import converters
+
 from .. import views
 
+
+class SignedIntConverter(converters.IntConverter):
+    regex = "-?[0-9]+"
+
+
+converters.register_converter(SignedIntConverter, "uint")
+
 management_urls = [
-    re_path(r"^$", views.ManagementHome.as_view(), name="picker-manage"),
-    re_path(r"^game/(\d+)/$", views.ManageGame.as_view(), name="picker-manage-game"),
-    re_path(
-        r"^(?P<season>\d{4})/",
+    path("", views.ManagementHome.as_view(), name="picker-manage"),
+    path("game/<int:game_id>/", views.ManageGame.as_view(), name="picker-manage-game"),
+    path(
+        "<int:season>/",
         include(
             [
-                re_path(r"^$", views.ManageSeason.as_view(), name="picker-manage-season"),
-                re_path(r"^(-?\d+)/$", views.ManageWeek.as_view(), name="picker-manage-week"),
+                path("", views.ManageSeason.as_view(), name="picker-manage-season"),
+                path("<uint:sequence>/", views.ManageWeek.as_view(), name="picker-manage-week"),
             ]
         ),
     ),
 ]
 
 picks_urls = [
-    re_path(r"^$", views.Picks.as_view(), name="picker-picks"),
-    re_path(
-        r"^(?P<season>\d{4})/",
+    path("", views.Picks.as_view(), name="picker-picks"),
+    path(
+        "<int:season>/",
         include(
             [
-                re_path(r"^$", views.PicksBySeason.as_view(), name="picker-season-picks"),
-                re_path(
-                    r"^(-?\d+)/$",
+                path("", views.PicksBySeason.as_view(), name="picker-picks-season"),
+                path(
+                    "<uint:sequence>/",
                     views.PicksByGameset.as_view(),
                     name="picker-picks-sequence",
                 ),
@@ -33,42 +42,48 @@ picks_urls = [
 ]
 
 results_urls = [
-    re_path(
-        r"^$",
+    path(
+        "",
         views.GroupMembershipRedirect.as_view(redirect_view_name="picker-results-group"),
         name="picker-results",
     ),
-    re_path(r"^(?P<group_id>\d)/$", views.Results.as_view(), name="picker-results-group"),
-    re_path(
-        r"^(?P<group_id>\d+)/(?P<season>\d{4})/",
+    path(
+        "<int:group_id>/",
         include(
             [
-                re_path(r"^$", views.ResultsBySeason.as_view(), name="picker-season-results"),
-                re_path(
-                    r"^(-?\d+)/$",
-                    views.ResultsByWeek.as_view(),
-                    name="picker-game-sequence",
+                path("", views.Results.as_view(), name="picker-results-group"),
+                path(
+                    "<int:season>/",
+                    include(
+                        [
+                            path("", views.ResultsBySeason.as_view(), name="picker-results-season"),
+                            path(
+                                "<uint:sequence>/",
+                                views.ResultsByWeek.as_view(),
+                                name="picker-results-sequence",
+                            ),
+                        ]
+                    ),
                 ),
             ]
         ),
     ),
 ]
 
-
 roster_urls = [
-    re_path(
-        r"^$",
-        views.GroupMembershipRedirect.as_view(redirect_view_name="picker-roster"),
-        name="picker-roster-base",
+    path(
+        "",
+        views.GroupMembershipRedirect.as_view(redirect_view_name="picker-roster-group"),
+        name="picker-roster",
     ),
-    re_path(
-        r"^(\d+)/",
+    path(
+        "<int:group_id>/",
         include(
             [
-                re_path(r"^$", views.Roster.as_view(), name="picker-roster"),
-                re_path(r"^(\d{4})/$", views.Roster.as_view(), name="picker-season-roster"),
-                re_path(
-                    r"^p/(\w+)/$",
+                path("", views.Roster.as_view(), name="picker-roster-group"),
+                path("<int:season>/", views.Roster.as_view(), name="picker-roster-season"),
+                path(
+                    "p/<slug:username>/",
                     views.RosterProfile.as_view(),
                     name="picker-roster-profile",
                 ),

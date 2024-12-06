@@ -8,9 +8,9 @@ class Team(SimplePickerViewBase):
     template_name = "@teams/detail.html"
 
     def get_context_data(self, **kwargs):
-        return super().get_context_data(
-            team=get_object_or_404(self.league.teams, abbr=self.args[0]), **kwargs
-        )
+        team_abbr = kwargs.pop("team", None) or self.kwargs.get("team")
+        team = get_object_or_404(self.league.teams, abbr=team_abbr)
+        return super().get_context_data(team=team, **kwargs)
 
 
 class Teams(SimplePickerViewBase):

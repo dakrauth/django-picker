@@ -5,7 +5,7 @@
     {% load django_bootstrap5 %}
     <h1>
         Week #{{ gameset.sequence }}
-        <small><a href="{% url 'picker-season-picks' gameset.league.slug gameset.season %}">{{ gameset.season }}</a></small>
+        <small><a href="{% url 'picker-picks-season' gameset.league.slug gameset.season %}">{{ gameset.season }}</a></small>
     </h1>
     {% include "picker/inclusions/byes.html" %}
     {% season_nav gameset "picks" %}

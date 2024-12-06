@@ -32,7 +32,7 @@
                 <td class="player">
                     <div>
                         <strong>
-                            <a href="{% url 'picker-roster-profile' league.slug 1 entry.user.username %}">
+                            <a href="{% url 'picker-roster-profile' league.slug group.id entry.user.username %}">
                                 {{ entry.user.username }}</a></strong> <br />
                         {% favorite_team entry.user as team %}
                         {% if team %}

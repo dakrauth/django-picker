@@ -47,6 +47,11 @@ class Preference(models.Model):
         return self.autopick != self.Autopick.NONE
 
 
+class ActiveStatusManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(status=self.model.Status.ACTIVE)
+
+
 class PickerGrouping(models.Model):
     class Category(models.TextChoices):
         PUBLIC = "PUB", "Public"
@@ -61,6 +66,9 @@ class PickerGrouping(models.Model):
     leagues = models.ManyToManyField(sports.League, blank=True)
     status = models.CharField(max_length=4, choices=Status.choices, default=Status.ACTIVE)
     category = models.CharField(max_length=3, choices=Category.choices, default=Category.PRIVATE)
+
+    objects = models.Manager()
+    active = ActiveStatusManager()
 
     def __str__(self):
         return self.name
@@ -79,6 +87,22 @@ class PickerFavorite(models.Model):
             raise ValueError("Team {} not in league {}".format(self.team, self.league))
 
         return super().save(*args, **kws)
+
+
+class ActiveMembershipManager(models.Manager):
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .filter(status=self.model.Status.ACTIVE, group__status=PickerGrouping.Status.ACTIVE)
+            .select_related("group")
+            .prefetch_related(
+                models.Prefetch("group__leagues", queryset=sports.League.active.all())
+            )
+        )
+
+    def for_user(self, user):
+        return self.filter(user=user)
 
 
 class PickerMembership(models.Model):
@@ -101,8 +125,11 @@ class PickerMembership(models.Model):
     status = models.CharField(max_length=4, choices=Status.choices, default=Status.ACTIVE)
     autopick = models.CharField(max_length=4, choices=Autopick.choices, default=Autopick.RANDOM)
 
+    objects = models.Manager()
+    active = ActiveMembershipManager()
+
     def __str__(self):
-        return str(self.user)
+        return f"{self.user}@{self.group}"
 
     @property
     def is_active(self):
@@ -335,7 +362,9 @@ class GameSetPicks(sports.GameSet):
                 game.winner = (
                     game.home
                     if game.home.abbr == winner
-                    else game.away if game.away.abbr == winner else None
+                    else game.away
+                    if game.away.abbr == winner
+                    else None
                 )
                 count += 1
 
