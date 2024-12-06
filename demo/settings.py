@@ -78,7 +78,8 @@ PICKER = {
         "TEAM_PICKER_WIDGET": "demo.project.TemplateTeamChoice",
     },
     "HQ": {
-        "TEAM_PICKER_WIDGET": "demo.project.TemplateTeamChoice", "SHOW_TV": False,
+        "TEAM_PICKER_WIDGET": "demo.project.TemplateTeamChoice",
+        "SHOW_TV": False,
     },
     "ENG1": {
         "TEAM_PICKER_WIDGET": "demo.project.TemplateTeamChoice",

@@ -13,23 +13,18 @@ class Home(SimplePickerViewBase):
 
 class GroupMembershipRedirect(PickerViewBase):
     redirect_view_name = None  # "picker-roster"
+    template_name = "@group_select.html"
 
     def group_redirect(self, view_name, membership):
         return self.redirect(view_name, self.league.slug, membership.group.id)
 
     def get(self, request, *args, **kwargs):
-        memberships = request.user.picker_memberships.filter(
-            group__leagues=self.league
-        ).select_related("group")
-
+        memberships = self.memberships
         count = memberships.count()
         if count == 1:
             return self.redirect(self.redirect_view_name, self.league.slug, memberships[0].group.id)
         elif count > 1:
-            return self.render_to_response(
-                self.get_context_data(memberships=memberships),
-                template_override="@group_select.html",
-            )
+            return self.render_to_response(self.get_context_data())
 
         return self.render_to_response(
             {
@@ -42,9 +37,12 @@ class GroupMembershipRedirect(PickerViewBase):
 
 
 class RosterMixin:
-    @property
+    @cached_property
     def group(self):
-        return get_object_or_404(PickerGrouping, pk=self.args[0])
+        return get_object_or_404(PickerGrouping, pk=self.kwargs["group_id"])
+
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(group=self.group, **kwargs)
 
 
 class Roster(RosterMixin, PickerViewBase):
@@ -58,11 +56,9 @@ class Roster(RosterMixin, PickerViewBase):
         return super().season
 
     def get_context_data(self, **kwargs):
-        group = self.group
-        roster = RosterStats.get_details(self.league, group, self.season)
+        roster = RosterStats.get_details(self.league, self.group, self.season)
         return super().get_context_data(
             roster=roster,
-            group=group,
             other_groups=PickerGrouping.objects.filter(members__user=self.request.user),
             **kwargs,
         )
@@ -73,7 +69,7 @@ class RosterProfile(RosterMixin, PickerViewBase):
 
     def get_context_data(self, **kwargs):
         league = self.league
-        username = self.args[1]
+        username = self.kwargs["username"]
         pref = get_object_or_404(Preference, user__username=username)
         seasons = list(league.available_seasons) + [None]
         return super().get_context_data(
@@ -84,13 +80,8 @@ class RosterProfile(RosterMixin, PickerViewBase):
 #  Results
 
 
-class ResultsBase(PickerViewBase):
-    @cached_property
-    def group(self):
-        return get_object_or_404(PickerGrouping, pk=int(self.kwargs["group_id"]))
-
-    def get_context_data(self, **kwargs):
-        return super().get_context_data(group=self.group, **kwargs)
+class ResultsBase(RosterMixin, PickerViewBase):
+    pass
 
 
 class Results(ResultsBase):
@@ -127,7 +118,7 @@ class ResultsByWeek(ResultsBase):
                 GameSetPicks,
                 league=self.league,
                 season=self.season,
-                sequence=self.args[0],
+                sequence=self.kwargs["sequence"],
             ),
             **kwargs,
         )
@@ -173,7 +164,7 @@ class PicksByGameset(SimpleFormMixin, PickerViewBase):
     @cached_property
     def gameset(self):
         return get_object_or_404(
-            GameSetPicks, league=self.league, season=self.season, sequence=self.args[0]
+            GameSetPicks, league=self.league, season=self.season, sequence=self.kwargs["sequence"]
         )
 
     def form_valid(self, form):
@@ -189,9 +180,9 @@ class PicksByGameset(SimpleFormMixin, PickerViewBase):
         return super().get_context_data(gameset=self.gameset, **kwargs)
 
     def show_picks(self, gameset, **kwargs):
-        self.template_name = "@picks/show.html"
         return self.render_to_response(
-            self.get_context_data(picks=gameset.pick_for_user(self.request.user), **kwargs)
+            self.get_context_data(picks=gameset.pick_for_user(self.request.user), **kwargs),
+            template_override="@picks/show.html"
         )
 
     def post(self, request, *args, **kwargs):

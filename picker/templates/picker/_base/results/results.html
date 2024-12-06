@@ -4,7 +4,7 @@
 {% block main_content %}
     <h1>
         Results for week {{ gameset.sequence }}
-        <small><a href="{% url 'picker-season-results' gameset.league.slug group.id gameset.season %}">{{ gameset.season }}</a></small>
+        <small><a href="{% url 'picker-results-season' gameset.league.slug group.id gameset.season %}">{{ gameset.season }}</a></small>
     </h1>
     {% season_nav gameset "results" %}
     {% with gameset.results as results %}

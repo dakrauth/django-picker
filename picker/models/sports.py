@@ -35,6 +35,11 @@ def temp_slug():
     return "{:10.0f}".format(random.random() * 10000000000)
 
 
+class ActiveManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+
 class League(models.Model):
     name = models.CharField(max_length=50, unique=True)
     abbr = models.CharField(max_length=8)
@@ -42,6 +47,10 @@ class League(models.Model):
     current_season = models.IntegerField(blank=True, null=True)
     slug = models.SlugField(default=temp_slug)
     avg_game_duration = models.PositiveIntegerField(default=240)
+    is_active = models.BooleanField(default=True)
+
+    objects = models.Manager()
+    active = ActiveManager()
 
     class Meta:
         permissions = (("can_update_score", "Can update scores"),)
@@ -55,7 +64,7 @@ class League(models.Model):
     get_absolute_url = partialmethod(_reverse, "picker-home")
     picks_url = partialmethod(_reverse, "picker-picks")
     results_url = partialmethod(_reverse, "picker-results")
-    roster_url = partialmethod(_reverse, "picker-roster-base")
+    roster_url = partialmethod(_reverse, "picker-roster")
     teams_url = partialmethod(_reverse, "picker-teams")
     schedule_url = partialmethod(_reverse, "picker-schedule")
     manage_url = partialmethod(_reverse, "picker-manage")
@@ -69,6 +78,7 @@ class League(models.Model):
                 "slug": self.slug,
                 "abbr": self.abbr,
                 "current_season": self.current_season,
+                "is_active": self.is_active,
                 "teams": [team.to_dict() for team in self.teams.all()],
             },
             "season": {
@@ -247,6 +257,24 @@ class Team(models.Model):
 
     def season_record(self, season=None):
         season = season or self.league.current_season
+        Q, Count, Status = models.Q, models.Count, Game.Status
+        values = Game.objects.filter(gameset__season=season).aggregate(
+            wins=Count(
+                "pk",
+                filter=Q(status=Status.AWAY_WIN, away=self) | Q(status=Status.HOME_WIN, home=self),
+            ),
+            losses=Count(
+                "pk",
+                filter=Q(status=Status.AWAY_WIN, home=self) | Q(status=Status.HOME_WIN, away=self),
+            ),
+            ties=Count(
+                "pk", filter=Q(status=Status.TIE, away=self) | Q(status=Status.TIE, home=self)
+            ),
+        )
+        return (values["wins"], values["losses"], values["ties"])
+
+    def _old_season_record(self, season=None):
+        season = season or self.league.current_season
         wins, losses, ties = (0, 0, 0)
         for status, home_abbr, away_abbr in (
             Game.objects.filter(
@@ -286,7 +314,10 @@ class Team(models.Model):
 
     @property
     def color_options(self):
-        return self.colors.split(",") if self.colors else []
+        if not self.colors:
+            return []
+
+        return [color if color.startswith("#") else f"#{color}" for color in self.colors.split(",")]
 
     def schedule(self, season=None):
         return Game.objects.select_related("gameset").filter(

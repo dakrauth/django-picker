@@ -102,15 +102,17 @@ def import_league(cls, data):
                     div, div_created = confs[conf_name].divisions.get_or_create(name=div_name)
                     divs[(div_name, conf_name)] = div
 
+        colors = ",".join(tm.get("colors", []))
         team, created = league.teams.get_or_create(
             name=tm["name"],
             abbr=tm["abbr"],
             defaults={
                 "nickname": tm.get("nickname", ""),
-                "colors": tm.get("colors", ""),
+                "colors": colors,
                 "conference": conf,
                 "division": div,
                 "logo": tm.get("logo", ""),
+                "location": tm.get("location", ""),
             },
         )
         for alias in tm.get("aliases", []):

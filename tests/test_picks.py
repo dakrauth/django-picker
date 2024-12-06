@@ -8,16 +8,16 @@ from .conftest import _now
 YEAR = _now.year
 
 PICK_ARGS = [
-    # /<league>/picks/<season>/ picker.views.picks.PicksBySeason picker-season-picks
-    ("picker-season-picks", ["hq", str(YEAR)]),
+    # /<league>/picks/<season>/ picker.views.picks.PicksBySeason picker-picks-season
+    ("picker-picks-season", ["hq", str(YEAR)]),
     # /<league>/picks/<season>/<var>/ picker.views.picks.PicksByWeek  picker-picks-sequence
     ("picker-picks-sequence", ["hq", str(YEAR), "1"]),
     # /<league>/results/  picker.views.picks.Results  picker-results
     ("picker-results-group", ["hq", "1"]),
-    # /<league>/results/<season>/ picker.views.picks.ResultsBySeason  picker-season-results
-    ("picker-season-results", ["hq", "1", str(YEAR)]),
-    # /<league>/results/<season>/<var>/ picker.views.picks.ResultsByWeek picker-game-sequence
-    ("picker-game-sequence", ["hq", "1", str(YEAR), "1"]),
+    # /<league>/results/<season>/ picker.views.picks.ResultsBySeason  picker-results-season
+    ("picker-results-season", ["hq", "1", str(YEAR)]),
+    # /<league>/results/<season>/<var>/ picker.views.picks.ResultsByWeek picker-results-sequence
+    ("picker-results-sequence", ["hq", "1", str(YEAR), "1"]),
 ]
 
 
@@ -92,9 +92,7 @@ class TestPicksForm:
             [{"game_1": HUF, "game_2": SLY, "points": "200"}, user2, 1],
         ]:
             client.force_login(user)
-            r = client.post(
-                reverse("picker-picks-sequence", args=[slug, season, seq]), data
-            )
+            r = client.post(reverse("picker-picks-sequence", args=[slug, season, seq]), data)
 
         assert picker.PickSet.objects.count() == 2
         assert picker.PickSet.objects.filter(is_winner=True).count() == 0
@@ -117,9 +115,7 @@ class TestPicksForm:
             [{"game_5": GRF, "game_6": RVN, "points": "400"}, user2, 3],
         ]:
             client.force_login(user)
-            r = client.post(
-                reverse("picker-picks-sequence", args=[slug, season, seq]), data
-            )
+            r = client.post(reverse("picker-picks-sequence", args=[slug, season, seq]), data)
 
         assert picker.PickSet.objects.count() == 6
 

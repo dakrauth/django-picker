@@ -11,7 +11,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .. import utils
-from ..models import League, Preference
+from ..models import League, Preference, PickerMembership
 
 
 class SimpleFormMixin(FormMixin):
@@ -46,15 +46,19 @@ class SimplePickerViewBase(TemplateView):
     @property
     def season(self):
         season = self.kwargs.get("season")
-        if season and season.isdigit():
-            return int(season)
+        if season:
+            return season
 
         league = self.league
         return league.current_season or league.latest_season
 
     @cached_property
+    def leagues(self):
+        return League.active.all()
+
+    @cached_property
     def league(self):
-        return get_object_or_404(League, abbr__iexact=self.kwargs["league"])
+        return get_object_or_404(League.active, slug=self.kwargs["league"])
 
     def get_template_names(self, template_override=None):
         if template_override is None and self.template_name is None:
@@ -64,17 +68,14 @@ class SimplePickerViewBase(TemplateView):
                 "'get_template_names()'"
             )
 
-        return utils.get_templates(template_override or self.template_name, self.league)
+        self.template_names_list = utils.get_templates(
+            template_override or self.template_name, self.league
+        )
+        return self.template_names_list
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
         league = self.league
-        if hasattr(self.request, "user") and self.request.user.is_authenticated:
-            try:
-                data["preferences"] = Preference.objects.get(user=self.request.user)
-            except Preference.DoesNotExist:
-                pass
-
         data.update(
             {
                 "now": timezone.now(),
@@ -104,4 +105,13 @@ class SimplePickerViewBase(TemplateView):
 
 
 class PickerViewBase(LoginRequiredMixin, SimplePickerViewBase):
-    pass
+    def get_context_data(self, **kwargs):
+        return super().get_context_data(
+            preferences=Preference.objects.get(user=self.request.user),
+            memberships=self.memberships,
+            **kwargs,
+        )
+
+    @cached_property
+    def memberships(self):
+        return PickerMembership.active.for_user(self.request.user)

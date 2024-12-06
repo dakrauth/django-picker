@@ -11,7 +11,7 @@
                 "abbr": "BOU",
                 "logo": "picker/logos/eng1/bou.png",
                 "name": "AFC Bournemouth",
-                "nickname": "",
+                "nickname": "Cherries",
                 "aliases": [],
                 "coach": "",
                 "location": "AFC Bournemouth"
@@ -29,7 +29,7 @@
                 "abbr": "AVL",
                 "logo": "picker/logos/eng1/avl.png",
                 "name": "Aston Villa",
-                "nickname": "",
+                "nickname": "Villans",
                 "aliases": [],
                 "coach": "",
                 "location": "Aston Villa"
@@ -38,7 +38,7 @@
                 "abbr": "BRE",
                 "logo": "picker/logos/eng1/bre.png",
                 "name": "Brentford",
-                "nickname": "",
+                "nickname": "Bees",
                 "aliases": [],
                 "coach": "",
                 "location": "Brentford"
@@ -83,7 +83,7 @@
                 "abbr": "FUL",
                 "logo": "picker/logos/eng1/ful.png",
                 "name": "Fulham",
-                "nickname": "",
+                "nickname": "Cottagers",
                 "aliases": [],
                 "coach": "",
                 "location": "Fulham"
@@ -146,7 +146,7 @@
                 "abbr": "NFO",
                 "logo": "picker/logos/eng1/nfo.png",
                 "name": "Nottingham Forest",
-                "nickname": "Nottingham F.",
+                "nickname": "Tricky Trees",
                 "aliases": [],
                 "coach": "",
                 "location": "Nottingham Forest"
@@ -173,7 +173,7 @@
                 "abbr": "WHU",
                 "logo": "picker/logos/eng1/whu.png",
                 "name": "West Ham United",
-                "nickname": "Hammers/Iron",
+                "nickname": "Irons",
                 "aliases": [],
                 "coach": "",
                 "location": "West Ham United"

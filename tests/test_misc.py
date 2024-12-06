@@ -53,9 +53,7 @@ def can_participate(user, gs):
 
 class TestUtils:
     def test_participate(self):
-        conf.picker_settings["PARTICIPATION_HOOKS"] = [
-            "tests.test_misc.can_participate"
-        ]
+        conf.picker_settings["PARTICIPATION_HOOKS"] = ["tests.test_misc.can_participate"]
         assert utils.can_user_participate(None, True) is True
         assert utils.can_user_participate(None, False) is False
 
