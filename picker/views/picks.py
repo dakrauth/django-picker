@@ -180,9 +180,9 @@ class PicksByGameset(SimpleFormMixin, PickerViewBase):
         return super().get_context_data(gameset=self.gameset, **kwargs)
 
     def show_picks(self, gameset, **kwargs):
-        self.template_name = "@picks/show.html"
         return self.render_to_response(
-            self.get_context_data(picks=gameset.pick_for_user(self.request.user), **kwargs)
+            self.get_context_data(picks=gameset.pick_for_user(self.request.user), **kwargs),
+            template_override="@picks/show.html"
         )
 
     def post(self, request, *args, **kwargs):

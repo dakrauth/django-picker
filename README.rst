@@ -69,3 +69,8 @@ Meta
 :License: MIT (see ``LICENSE`` file for more information)
 :Source: https://github.com/dakrauth/django-picker
 
+Database Schema
+~~~~~~~~~~~~~~~
+
+.. image:: resources/models.png
+
