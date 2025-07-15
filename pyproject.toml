@@ -1,12 +1,13 @@
 [build-system]
-requires = ["setuptools>=61.0.0"]
+requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "picker"
 dynamic = ["version"]
 description = "A Django sports picker app"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = [ "LICENSE" ]
 readme = { file = "README.rst", content-type = "text/x-rst" }
 keywords = ["django", "sports", "football"]
 authors = [
@@ -14,12 +15,12 @@ authors = [
 ]
 requires-python = ">=3.10"
 classifiers = [
-        "License :: OSI Approved :: MIT License",
         "Environment :: Web Environment",
         "Framework :: Django",
         "Framework :: Django :: 4.2",
         "Framework :: Django :: 5.0",
         "Framework :: Django :: 5.1",
+        "Framework :: Django :: 5.2",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.10",
