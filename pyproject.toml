@@ -61,8 +61,18 @@ dev = [
 [tool.setuptools.dynamic]
 version = { attr = "picker.__init__.__version__"}
 
-[tool.setuptools.packages.find]
-include = ["picker*"]
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = [
+    "picker",
+    "picker.templatetags",
+    "picker.migrations",
+    "picker.management",
+    "picker.management.commands",
+    "picker.models",
+    "picker.urls",
+    "picker.views",
+]
 
 [tool.black]
 line-length = 100

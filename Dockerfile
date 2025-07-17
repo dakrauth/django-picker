@@ -11,7 +11,7 @@ RUN pip install django-extensions pillow freezegun
 WORKDIR /app
 
 COPY pyproject.toml /app
-COPY picker /app/picker
+COPY src/picker /app/picker
 COPY demo /app/demo
 COPY tests /app/tests
 
