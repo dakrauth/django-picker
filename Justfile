@@ -3,7 +3,7 @@ set positional-arguments
 
 DEV := "./.dev"
 DIST := DEV / "dist"
-VENV := DEV / "venv"
+VENV :=  "./.venv"
 BIN := VENV / "bin"
 PIP := BIN / "python -m pip --require-venv"
 DJENV := "DJANGO_SETTINGS_MODULE=demo.settings PYTHONPATH=."

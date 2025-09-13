@@ -4,6 +4,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.dispatch import Signal
+from django.contrib.auth import get_user_model
 
 from . import sports
 from ..exceptions import PickerResultException
@@ -17,6 +18,7 @@ __all__ = [
     "PickSet",
     "GamePick",
     "GameSetPicks",
+    "active_users_for_league",
 ]
 
 
@@ -144,6 +146,19 @@ class PickerMembership(models.Model):
     @property
     def is_management(self):
         return self.status == self.Status.MANAGER
+
+
+def active_users_for_league(league, **kwargs):
+    return get_user_model().objects.filter(
+        is_active=True,
+        picker_memberships__group__leagues=league,
+        picker_memberships__status__in=(
+            PickerMembership.Status.ACTIVE,
+            PickerMembership.Status.MANAGER,
+        ),
+        picker_memberships__group__status=PickerGrouping.Status.ACTIVE,
+        **kwargs,
+    )
 
 
 class PickSetManager(models.Manager):
