@@ -129,7 +129,7 @@ class League(models.Model):
     def current_gameset(self):
         rel = timezone.now()
         try:
-            return self.gamesets.get(opens__lte=rel, closes__gte=rel)
+            return self.gamesets.filter(opens__lte=rel, closes__gte=rel).order_by("opens").first()
         except GameSet.DoesNotExist:
             return None
 
