@@ -1,6 +1,6 @@
 import pytest
 
-from picker import models as picker
+from picker.models import PickSet, PickerFavorite, Picker
 from picker import forms, exceptions
 
 from .conftest import _now
@@ -46,8 +46,8 @@ class TestGameSet:
         assert isinstance(str(game), str)
         assert isinstance(game.short_description, str)
 
-    def test_create_picks(self, league, gameset, user):
-        picker.PickSet.objects.for_gameset_user(gameset, user, picker.PickSet.Strategy.RANDOM)
+    def test_create_picks(self, league, gameset, picker):
+        PickSet.objects.for_gameset_picker(gameset, picker, PickSet.Strategy.RANDOM)
 
 
 @pytest.mark.django_db
@@ -74,36 +74,34 @@ class TestUserConf:
         assert league.get_absolute_url() == "/hq/"
         assert league.latest_gameset == gamesets[1]
 
-    def test_users(self, client, league, grouping, users):
-        assert len(users) == 3
-        assert users[0].is_superuser
-        assert not any(u.is_superuser for u in users[1:])
-        assert picker.Preference.objects.count() == 3
-        assert picker.Preference.objects.filter(user__is_active=True).count() == 3
-        assert picker.Preference.objects.last().should_autopick is True
+    def test_pickers(self, client, league, grouping, pickers):
+        assert len(pickers) == 3
+        assert pickers[0].user.is_superuser
+        assert not any(p.user.is_superuser for p in pickers[1:])
+        assert Picker.objects.count() == 3
+        assert Picker.objects.filter(user__is_active=True).count() == 3
 
-        users_dct = {u.id: u for u in users}
+        pickers_dct = {p.id: p for p in pickers}
         group = league.pickergrouping_set.get()
 
         mbr = group.members.first()
-        assert str(mbr.user) in str(mbr)
+        assert str(mbr.picker) in str(mbr)
         assert mbr.is_active is True
         assert mbr.is_management is False
-        assert users_dct == {mbr.user.id: mbr.user for mbr in group.members.all()}
+        assert pickers_dct == {mbr.picker.id: mbr.picker for mbr in group.members.all()}
 
-        user = users[0]
-        fav = picker.PickerFavorite.objects.create(user=user, league=league, team=None)
-        assert str(fav) == "{}: {} ({})".format(user, "None", league)
+        picker = pickers[0]
+        fav = PickerFavorite.objects.create(picker=picker, league=league, team=None)
+        assert str(fav) == "{}: {} ({})".format(picker, "None", league)
         fav.team = league.team_dict["GRF"]
         fav.save()
-        assert str(fav) == "{}: {} ({})".format(user, "Gryffindor Lions", league)
+        assert str(fav) == "{}: {} ({})".format(picker, "Gryffindor Lions", league)
 
-        pref = picker.Preference.objects.get(user=user)
-        form = forms.PreferenceForm(
-            pref,
+        form = forms.PickerForm(
+            picker,
             {
+                "name": picker.name,
                 "hq_favorite": league.team_dict["RVN"].id,
-                "autopick": picker.Preference.Autopick.NONE,
             },
         )
 
@@ -113,5 +111,5 @@ class TestUserConf:
 
         assert is_valid
         form.save()
-        fav = picker.PickerFavorite.objects.get(user=user, league=league)
+        fav = PickerFavorite.objects.get(picker=picker, league=league)
         assert fav.team.abbr == "RVN"

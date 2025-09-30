@@ -83,7 +83,7 @@ roster_urls = [
                 path("", views.Roster.as_view(), name="picker-roster-group"),
                 path("<int:season>/", views.Roster.as_view(), name="picker-roster-season"),
                 path(
-                    "p/<slug:username>/",
+                    "p/<slug:pickername>/",
                     views.RosterProfile.as_view(),
                     name="picker-roster-profile",
                 ),

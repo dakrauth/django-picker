@@ -20,7 +20,7 @@ def user_result(user_pick, actual_results):
 
 @register.inclusion_tag(get_templates("@season_nav.html"), takes_context=True)
 def season_nav(context, gameset, relative_to):
-    user = context["user"]
+    picker = context["picker"]
     league = context["league"]
     prev = following = None
     if gameset:
@@ -30,34 +30,34 @@ def season_nav(context, gameset, relative_to):
     return {
         "gameset": gameset,
         "relative_to": relative_to,
-        "user": user,
+        "picker": picker,
         "group": context.get("group"),
         "league": league,
         "previous": prev,
         "following": following,
-        "is_manager": user.is_superuser or user.is_staff,
+        "is_manager": picker.user.is_superuser or picker.user.is_staff,
         "season_gamesets": league.season_gamesets(gameset.season if gameset else None),
     }
 
 
 @register.inclusion_tag(get_templates("@season_nav_all.html"), takes_context=True)
 def all_seasons_nav(context, current, league, relative_to):
-    user = context["user"]
+    picker = context["picker"]
     return {
         "label": "All seasons",
         "group": context.get("group"),
         "current": int(current) if current else None,
         "relative_to": relative_to,
-        "user": user,
-        "is_manager": user.is_superuser or user.is_staff,
+        "picker": picker,
+        "is_manager": picker.user.is_superuser or picker.user.is_staff,
         "league": league,
     }
 
 
 @register.simple_tag(takes_context=True)
-def favorite_team(context, user, league=None):
+def favorite_team(context, picker, league=None):
     league = league or context["league"]
     try:
-        return PickerFavorite.objects.get(user=user, league=league).team
+        return PickerFavorite.objects.get(picker=picker, league=league).team
     except PickerFavorite.DoesNotExist:
         pass

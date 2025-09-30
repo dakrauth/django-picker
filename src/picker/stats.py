@@ -1,5 +1,4 @@
 from django.db.models import Q
-from django.contrib.auth import get_user_model
 from .utils import sorted_standings
 
 
@@ -8,8 +7,8 @@ def percent(num, denom):
 
 
 class RosterStats:
-    def __init__(self, user, league, season=None):
-        self.user = user
+    def __init__(self, picker, league, season=None):
+        self.picker = picker
         self.season = season
         self.league = league
         self.correct = 0
@@ -17,7 +16,7 @@ class RosterStats:
         self.points_delta = 0
 
         queryset = (
-            self.user.picksets.filter(gameset__league=league)
+            self.picker.picksets.filter(gameset__league=league)
             .select_related()
             .filter(Q(correct__gt=0) | Q(wrong__gt=0))
         )
@@ -39,27 +38,28 @@ class RosterStats:
             if is_winner:
                 self.picksets_won += 1
 
-        self.is_active = self.user.is_active
+        self.is_active = self.picker.is_active
         self.pct = percent(self.correct, self.correct + self.wrong)
         self.avg_points_delta = (
             self.points_delta / self.picksets_played if self.picksets_played else 0
         )
 
     def __str__(self):
-        return "{}{}".format(self.user, " ({})".format(self.season) if self.season else "")
+        return "{}{}".format(self.picker, " ({})".format(self.season) if self.season else "")
 
     __repr__ = __str__
 
     @classmethod
     def get_details(cls, league, group, season=None):
+        from .models import Picker
         season = season or league.current_season
-        users = get_user_model().objects.filter(is_active=True, picker_memberships__group=group)
-
+        pickers = Picker.objects.filter(is_active=True, picker_memberships__group=group)
+        # TODO
         def keyfn(rs):
             return (rs.correct, -rs.points_delta, rs.picksets_played)
 
-        stats = [cls(u, league) for u in users]
-        by_user = {entry.user: entry for entry in sorted_standings(stats, key=keyfn)}
-        stats = [cls(u, league, season) for u in users]
-        results = [(e, by_user[e.user]) for e in sorted_standings(stats, key=keyfn)]
+        stats = [cls(p, league) for p in pickers]
+        by_user = {entry.picker: entry for entry in sorted_standings(stats, key=keyfn)}
+        stats = [cls(p, league, season) for p in pickers]
+        results = [(e, by_user[e.picker]) for e in sorted_standings(stats, key=keyfn)]
         return results

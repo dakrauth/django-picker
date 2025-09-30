@@ -2,7 +2,7 @@ import pytest
 
 from picker import VERSION, get_version
 from picker import utils, conf
-from picker import models as picker
+from picker.models import PickSet
 
 
 class TestMisc:
@@ -18,7 +18,7 @@ model_urls = [
     "gameset",
     "league",
     "pickset",
-    "preference",
+    "picker",
     "team",
 ]
 
@@ -28,7 +28,7 @@ class TestAdmin:
     @pytest.mark.parametrize("bit", model_urls)
     def test_landing(self, client, superuser, gameset, bit):
         if bit == "pickset":
-            picker.PickSet.objects.create(user=superuser, gameset=gameset)
+            PickSet.objects.create(picker=superuser, gameset=gameset)
 
         r = client.get(f"/admin/picker/{bit}/")
         assert r.status_code == 200
@@ -41,7 +41,7 @@ class TestAdmin:
         assert r.status_code == 200
 
     def test_pickset_inlines(self, client, superuser, gameset):
-        ps = picker.PickSet.objects.create(user=superuser, gameset=gameset)
+        ps = PickSet.objects.create(picker=superuser, gameset=gameset)
         ps.gamepicks.create(game=gameset.games.first())
         r = client.get(f"/admin/picker/pickset/{ps.pk}/change/")
         assert r.status_code == 200
