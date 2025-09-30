@@ -13,13 +13,6 @@ def decoded_game_key(value):
     return int(value.replace("game_", ""))
 
 
-def encoded_game_item(game):
-    return (
-        encoded_game_key(game.id),
-        str(game.winner.id) if game.winner else (picker.TIE_KEY if game.is_tie else ""),
-    )
-
-
 @cache
 def get_picker_widget(league):
     widget_path = league.config("TEAM_PICKER_WIDGET")
@@ -77,7 +70,7 @@ class BasePickForm(forms.Form):
         super(BasePickForm, self).__init__(*args, **kws)
         self.gameset = gameset
         self.game_fields = FieldIter(self)
-        games = list(gameset.games.select_related("home__league", "away__league"))
+        games = list(gameset.games.all())
         if games:
             for gm in games:
                 key = encoded_game_key(gm.id)
@@ -124,23 +117,23 @@ class ManagementPickForm(BasePickForm):
 
 
 class UserPickForm(BasePickForm):
-    def __init__(self, user, gameset, *args, **kws):
-        initial = self.get_initial_user_picks(gameset, user)
+    def __init__(self, picker, gameset, *args, **kws):
+        initial = self.get_initial_picks(gameset, picker)
         kws.setdefault("initial", {}).update(initial)
-        self.user = user
+        self.picker = picker
         super(UserPickForm, self).__init__(gameset, *args, **kws)
 
     def save(self):
         data = self.cleaned_data.copy()
-        picks = picker.PickSet.objects.for_gameset_user(self.gameset, self.user)
+        picks = picker.PickSet.objects.for_gameset_picker(self.gameset, self.picker)
         points = data.pop("points", None)
         games = {decoded_game_key(k): v for k, v in data.items() if v}
         picks.update_picks(games=games, points=points)
         return picks
 
     @staticmethod
-    def get_initial_user_picks(gameset, user):
-        ps = gameset.pick_for_user(user)
+    def get_initial_picks(gameset, picker):
+        ps = gameset.pick_for_picker(picker)
         initial = (
             dict(
                 {
@@ -161,23 +154,23 @@ class GameForm(forms.ModelForm):
         fields = ("start_time", "location")
 
 
-class PreferenceForm(forms.ModelForm):
+class PickerForm(forms.ModelForm):
     class Meta:
-        model = picker.Preference
-        fields = ("autopick",)
+        model = picker.Picker
+        fields = ("name",)
 
     def __init__(self, instance, *args, **kws):
         kws["instance"] = instance
         self.current_email = instance.user.email.lower()
         kws.setdefault("initial", {})["email"] = self.current_email
-        super(PreferenceForm, self).__init__(*args, **kws)
+        super(PickerForm, self).__init__(*args, **kws)
 
         for league in picker.League.objects.all():
             field_name = "{}_favorite".format(league.slug)
             current = None
             if instance:
                 try:
-                    current = picker.PickerFavorite.objects.get(user=instance.user, league=league)
+                    current = picker.PickerFavorite.objects.get(picker=instance, league=league)
                 except picker.PickerFavorite.DoesNotExist:
                     pass
 
@@ -190,9 +183,9 @@ class PreferenceForm(forms.ModelForm):
             )
 
     def save(self, commit=True):
-        super(PreferenceForm, self).save(commit)
+        super(PickerForm, self).save(commit)
         if commit:
-            picker.PickerFavorite.objects.filter(user=self.instance.user).delete()
+            picker.PickerFavorite.objects.filter(picker=self.instance).delete()
             for key in self.cleaned_data:
                 if not key.endswith("_favorite"):
                     continue
@@ -200,5 +193,5 @@ class PreferenceForm(forms.ModelForm):
                 slug = key.rsplit("_")[0]
                 league = picker.League.objects.get(slug=slug)
                 picker.PickerFavorite.objects.create(
-                    league=league, user=self.instance.user, team=self.cleaned_data[key]
+                    league=league, picker=self.instance, team=self.cleaned_data[key]
                 )

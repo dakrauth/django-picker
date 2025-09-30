@@ -5,7 +5,7 @@ import pytest
 from django.urls import reverse
 from django.core.management import call_command
 
-from picker import models as picker
+from picker.models import League, GameSet, Division, Game, Alias, Team
 from picker import importers, exceptions
 
 
@@ -36,18 +36,18 @@ class TestImporters:
         call_command("import_picks", "tests/quidditch.json")
         data = load_json("quidditch.json")
         data["season"]["gamesets"][0].update(opens="2018-08-18T00:30Z", closes="2018-09-07T12:00Z")
-        league = picker.League.get("hq")
+        league = League.get("hq")
         gs = league.gamesets.first()
         opens, closes = gs.opens, gs.closes
-        importers.import_season(picker.League, data)
-        gs = picker.GameSet.objects.first()
+        importers.import_season(League, data)
+        gs = GameSet.objects.first()
         assert opens != gs.opens
         assert closes != gs.closes
 
     def test_import(self, client):
         nfl_data = load_json("nfl2019.json")
 
-        league_info, teams_info = picker.League.import_league(nfl_data["league"])
+        league_info, teams_info = League.import_league(nfl_data["league"])
         league, created = league_info
         assert created is True
 
@@ -55,7 +55,7 @@ class TestImporters:
         assert league.abbr == "NFL"
         assert league.current_season == 2019
         assert league.conferences.count() == 2
-        assert picker.Division.objects.count() == 8
+        assert Division.objects.count() == 8
         assert league.teams.count() == 32
 
         info = league.import_season(nfl_data["season"])
@@ -64,15 +64,15 @@ class TestImporters:
         for gs, is_new, games in info:
             assert is_new is True
             assert all(is_new for g, is_new in games)
-        assert picker.Game.objects.incomplete().count() == 256
+        assert Game.objects.incomplete().count() == 256
 
-        assert picker.Alias.objects.count() == 10
+        assert Alias.objects.count() == 10
         td = league.team_dict
         assert td["WAS"] == td["WSH"]
 
         assert league.config("TEAM_PICKER_WIDGET") == "django.forms.RadioSelect"
 
-        tm = picker.Team.objects.get(league=league, nickname="Jaguars")
+        tm = Team.objects.get(league=league, nickname="Jaguars")
         aliases = list(tm.aliases.values_list("name", flat=True))
         assert aliases == ["JAX"]
         assert str(aliases[0]) == "JAX"

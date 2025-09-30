@@ -15,6 +15,7 @@ from dateutil.parser import parse as parse_dt
 
 from ..conf import picker_settings
 from .. import importers
+from ..utils import random_bool
 
 __all__ = [
     "League",
@@ -125,13 +126,10 @@ class League(models.Model):
         gs = self.latest_gameset
         return gs.season if gs else None
 
-    @cached_property
+    @property
     def current_gameset(self):
         rel = timezone.now()
-        try:
-            return self.gamesets.filter(opens__lte=rel, closes__gte=rel).order_by("opens").first()
-        except GameSet.DoesNotExist:
-            return None
+        return self.gamesets.filter(opens__lte=rel, closes__gte=rel).order_by("opens").first()
 
     @cached_property
     def available_seasons(self):
@@ -142,16 +140,12 @@ class League(models.Model):
         return self.gamesets.filter(season=season)
 
     def random_points(self):
-        try:
-            d = self.gamesets.filter(points__gt=0).aggregate(
-                stddev=models.StdDev("points"), avg=models.Avg("points")
-            )
-        except OperationalError:
-            return 0
-        else:
-            avg = int(d.get("avg") or 0)
-            stddev = int(d.get("stddev") or 0)
-            return random.randint(avg - stddev, avg + stddev)
+        d = self.gamesets.filter(points__gt=0).aggregate(
+            stddev=models.StdDev("points"), avg=models.Avg("points")
+        )
+        avg = int(d.get("avg") or 0)
+        stddev = int(d.get("stddev") or 0)
+        return random.randint(avg - stddev, avg + stddev)
 
     @cached_property
     def _config(self):
@@ -210,6 +204,67 @@ def valid_team_abbr(value):
         raise ValidationError('Team abbr cannot start with "__"')
 
 
+class TeamManager(models.Manager):
+    def _season_record_annotations(self, season=None):
+        season = season or models.F("league__current_season")
+        Status = Game.Status
+        return {
+            "season_home_wins": models.Count(
+                "home_games__id",
+                distinct=True,
+                filter=models.Q(
+                    home_games__status=Status.HOME_WIN, home_games__gameset__season=season
+                ),
+            ),
+            "season_home_losses": models.Count(
+                "home_games",
+                distinct=True,
+                filter=models.Q(
+                    home_games__status=Status.AWAY_WIN, home_games__gameset__season=season
+                ),
+            ),
+            "season_home_ties": models.Count(
+                "home_games__id",
+                distinct=True,
+                filter=models.Q(home_games__status=Status.TIE, home_games__gameset__season=season),
+            ),
+            "season_away_wins": models.Count(
+                "away_games__id",
+                distinct=True,
+                filter=models.Q(
+                    away_games__status=Status.AWAY_WIN, away_games__gameset__season=season
+                ),
+            ),
+            "season_away_losses": models.Count(
+                "away_games__id",
+                distinct=True,
+                filter=models.Q(
+                    away_games__status=Status.HOME_WIN, away_games__gameset__season=season
+                ),
+            ),
+            "season_away_ties": models.Count(
+                "away_games__id",
+                distinct=True,
+                filter=models.Q(away_games__status=Status.TIE, away_games__gameset__season=season),
+            ),
+            "season_wins": models.F("season_home_wins") + models.F("season_away_wins"),
+            "season_losses": models.F("season_home_losses") + models.F("season_away_losses"),
+            "season_ties": models.F("season_away_ties") + models.F("season_home_ties"),
+        }
+
+    def get_queryset(self):
+        return super().get_queryset().annotate(**self._season_record_annotations())
+
+    def season_record(self, season, team):
+        data = (
+            super()
+            .get_queryset()
+            .filter(id=team.id)
+            .aggregate(**self._season_record_annotations(season))
+        )
+        return SimpleNamespace(team=team, season=season, **data)
+
+
 class Team(models.Model):
     """
     Common team attributes.
@@ -235,8 +290,11 @@ class Team(models.Model):
     logo = models.ImageField(upload_to=LOGOS_DIR, blank=True, null=True)
     notes = models.TextField(blank=True, default="")
 
+    objects = TeamManager()
+
     class Meta:
         ordering = ("name",)
+        base_manager_name = "objects"
 
     def __str__(self):
         return "{} {}".format(self.name, self.nickname)
@@ -257,54 +315,18 @@ class Team(models.Model):
         }
 
     def season_record(self, season=None):
-        season = season or self.league.current_season
-        Q, Count, Status = models.Q, models.Count, Game.Status
-        values = Game.objects.filter(gameset__season=season).aggregate(
-            wins=Count(
-                "pk",
-                filter=Q(status=Status.AWAY_WIN, away=self) | Q(status=Status.HOME_WIN, home=self),
-            ),
-            losses=Count(
-                "pk",
-                filter=Q(status=Status.AWAY_WIN, home=self) | Q(status=Status.HOME_WIN, away=self),
-            ),
-            ties=Count(
-                "pk", filter=Q(status=Status.TIE, away=self) | Q(status=Status.TIE, home=self)
-            ),
-        )
-        return (values["wins"], values["losses"], values["ties"])
-
-    def _old_season_record(self, season=None):
-        season = season or self.league.current_season
-        wins, losses, ties = (0, 0, 0)
-        for status, home_abbr, away_abbr in (
-            Game.objects.filter(
-                models.Q(home=self) | models.Q(away=self),
-                gameset__season=season,
-            )
-            .exclude(status__in=[Game.Status.UNPLAYED, Game.Status.CANCELLED])
-            .values_list("status", "home__abbr", "away__abbr")
-        ):
-            if status == Game.Status.TIE:
-                ties += 1
-            else:
-                if (status == Game.Status.HOME_WIN and self.abbr == home_abbr) or (
-                    status == Game.Status.AWAY_WIN and self.abbr == away_abbr
-                ):
-                    wins += 1
-                else:
-                    losses += 1
-
-        return (wins, losses, ties)
+        o = self
+        if season or not hasattr(self, "season_wins"):
+            o = Team.objects.season_record(season, self)
+        return (o.season_wins, o.season_losses, o.season_ties)
 
     def season_points(self, season=None):
-        season = season or self.league.current_season
         w, l, t = self.season_record(season)
         return w * 2 + t
 
     @property
     def record(self):
-        return self.season_record(self.league.current_season)
+        return self.season_record()
 
     @property
     def record_as_string(self):
@@ -330,29 +352,10 @@ class Team(models.Model):
         return self.bye_set.filter(season=season or self.league.current_season)
 
     def complete_record(self):
-        home_games = [0, 0, 0]
-        away_games = [0, 0, 0]
-
-        for games, accum, status in (
-            (self.away_games, away_games, Game.Status.AWAY_WIN),
-            (self.home_games, home_games, Game.Status.HOME_WIN),
-        ):
-            for res in games.exclude(status=Game.Status.UNPLAYED).values_list("status", flat=True):
-                if res == status:
-                    accum[0] += 1
-                elif res == Game.Status.TIE:
-                    accum[2] += 1
-                else:
-                    accum[1] += 1
-
         return [
-            home_games,
-            away_games,
-            [
-                away_games[0] + home_games[0],
-                away_games[1] + home_games[1],
-                away_games[2] + home_games[2],
-            ],
+            [self.season_home_wins, self.season_home_losses, self.season_home_ties],
+            [self.season_away_wins, self.season_away_losses, self.season_away_ties],
+            [self.season_wins, self.season_losses, self.season_ties],
         ]
 
 
@@ -436,7 +439,7 @@ class GameSet(models.Model):
 
     @cached_property
     def dates(self):
-        return self.games.dates("start_time", "day")
+        return sorted(set(d.date() for d in self.games.values_list("start_time", flat=True)))
 
     @property
     def last_game(self):
@@ -611,7 +614,7 @@ class Game(models.Model):
         self.save()
 
     def get_random_winner(self):
-        return random.choice((self.home, self.away))
+        return self.home if random_bool() else self.away
 
     @property
     def end_time(self):

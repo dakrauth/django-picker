@@ -1,6 +1,8 @@
+import string
+import random
 import pytest
 from datetime import timedelta
-from picker import models as picker
+from picker.models import League, GameSetPicks, PickerGrouping, PickerMembership, Picker
 from django.utils import timezone
 from django.contrib.auth.models import User
 
@@ -14,7 +16,7 @@ def now():
 
 @pytest.fixture
 def league(now):
-    league = picker.League.objects.create(
+    league = League.objects.create(
         name="Hogwarts Quidditch",
         slug="hq",
         abbr="HQ",
@@ -62,9 +64,14 @@ def league(now):
 
 
 @pytest.fixture
+def teams(league):
+    return list(league.teams.all())
+
+
+@pytest.fixture
 def gameset(league, now):
     teams = league.team_dict
-    gs = picker.GameSetPicks.objects.create(
+    gs = GameSetPicks.objects.create(
         league=league,
         season=now.year,
         sequence=1,
@@ -110,45 +117,62 @@ def gamesets(league, now):
 
 
 @pytest.fixture
-def grouping(league):
-    grouping = picker.PickerGrouping.objects.create(name="grouping")
+def grouping2(league):
+    grouping = PickerGrouping.objects.create(name="grouping2")
     grouping.leagues.add(league)
     return grouping
 
 
-def _make_mbr(user, grouping=None):
-    if grouping:
-        picker.PickerMembership.objects.create(user=user, group=grouping)
-    return user
+@pytest.fixture
+def grouping(league):
+    grouping = PickerGrouping.objects.create(name="grouping")
+    grouping.leagues.add(league)
+    return grouping
+
+
+def _make_mbr(picker, grouping):
+    PickerMembership.objects.create(picker=picker, group=grouping)
+    return picker
+
+
+def create_user(username, email, passwd):
+    return User.objects.create_user(username, email, passwd)
+
+
+def create_picker(user):
+    return Picker.objects.create(name=user.username, is_active=True, user=user)
+
+
+@pytest.fixture
+def user():
+    name = "".join(random.sample(list(string.ascii_lowercase) * 3, 8))
+    return create_user(name, f"{name}@example.com", "password")
 
 
 @pytest.fixture
 def superuser(client, grouping):
-    su = _make_mbr(
-        User.objects.create_superuser(
-            username="super", email="super@example.com", password="password"
-        ),
-        grouping,
+    su = User.objects.create_superuser(
+        username="super", email="super@example.com", password="password"
     )
     client.force_login(su)
-    return su
+    return _make_mbr(create_picker(su), grouping)
 
 
 @pytest.fixture
-def user(grouping):
-    return _make_mbr(User.objects.create_user("user1", "user1@example.com", "password"), grouping)
+def picker(grouping):
+    return _make_mbr(create_picker(create_user("user1", "user1@example.com", "password")), grouping)
 
 
 @pytest.fixture
-def user2(grouping):
-    return _make_mbr(User.objects.create_user("user2", "user2@example.com", "password"), grouping)
+def picker2(grouping):
+    return _make_mbr(create_picker(create_user("user2", "user2@example.com", "password")), grouping)
 
 
 @pytest.fixture
-def user_ng():
-    return User.objects.create_user("user3", "user3@example.com", "password")
+def picker_ng():
+    return create_picker(create_user("user3", "user3@example.com", "password"))
 
 
 @pytest.fixture
-def users(superuser, user, user2):
-    return [superuser, user, user2]
+def pickers(superuser, picker, picker2):
+    return [superuser, picker, picker2]

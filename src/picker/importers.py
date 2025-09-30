@@ -121,13 +121,4 @@ def import_league(cls, data):
         teams[tm["abbr"]] = team
         teams_results.append([team, created])
 
-    if "aliases" in data:
-        warnings.warn(
-            "aliases should be set on the team",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        for name, key in data.get("aliases", {}).items():
-            teams[key].aliases.get_or_create(name=name)
-
     return [[league, created_league], teams_results]

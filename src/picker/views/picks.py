@@ -2,9 +2,8 @@ from django.utils.functional import cached_property
 from django.shortcuts import get_object_or_404, get_list_or_404
 
 from .. import forms
-from ..stats import RosterStats
 from .base import SimplePickerViewBase, PickerViewBase, SimpleFormMixin
-from ..models import Preference, PickerGrouping, GameSetPicks
+from ..models import Picker, PickerGrouping, GameSetPicks
 
 
 class Home(SimplePickerViewBase):
@@ -45,18 +44,11 @@ class RosterMixin:
 class Roster(RosterMixin, PickerViewBase):
     template_name = "@roster/season.html"
 
-    @property
-    def season(self):
-        if len(self.args) == 2:
-            return int(self.args[1])
-
-        return super().season
-
     def get_context_data(self, **kwargs):
-        roster = RosterStats.get_details(self.league, self.group, self.season)
+        roster = Picker.stats.group_stats(self.group, self.league, self.season)
         return super().get_context_data(
             roster=roster,
-            other_groups=PickerGrouping.objects.filter(members__user=self.request.user),
+            other_groups=PickerGrouping.objects.filter(members__picker__user=self.request.user),
             **kwargs,
         )
 
@@ -66,11 +58,9 @@ class RosterProfile(RosterMixin, PickerViewBase):
 
     def get_context_data(self, **kwargs):
         league = self.league
-        username = self.kwargs["username"]
-        pref = get_object_or_404(Preference, user__username=username)
-        seasons = list(league.available_seasons) + [None]
+        other = get_object_or_404(Picker, name=self.kwargs["pickername"])
         return super().get_context_data(
-            profile=pref, stats=[RosterStats(pref.user, league, s) for s in seasons], **kwargs
+            other=other, stats=Picker.stats.for_picker(other, league), **kwargs
         )
 
 
@@ -130,7 +120,7 @@ class PicksBySeason(PickerViewBase):
     def get_context_data(self, **kwargs):
         return super().get_context_data(
             gamesets=[
-                (gs, gs.pick_for_user(self.request.user))
+                (gs, gs.pick_for_picker(self.picker))
                 for gs in get_list_or_404(GameSetPicks, league=self.league, season=self.season)
             ],
             **kwargs,
@@ -170,7 +160,7 @@ class PicksByGameset(SimpleFormMixin, PickerViewBase):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update(user=self.request.user, gameset=self.gameset)
+        kwargs.update(picker=self.picker, gameset=self.gameset)
         return kwargs
 
     def get_context_data(self, **kwargs):
@@ -178,14 +168,14 @@ class PicksByGameset(SimpleFormMixin, PickerViewBase):
 
     def show_picks(self, gameset, **kwargs):
         return self.render_to_response(
-            self.get_context_data(picks=gameset.pick_for_user(self.request.user), **kwargs),
+            self.get_context_data(picks=gameset.pick_for_picker(self.picker), **kwargs),
             template_override="@picks/show.html",
         )
 
     def post(self, request, *args, **kwargs):
         gameset = self.gameset
         if not gameset.is_open:
-            self.show_picks(gameset, **kwargs)
+            return self.show_picks(gameset, **kwargs)
 
         return super().post(request, *args, **kwargs)
 

@@ -43,7 +43,7 @@
         <tr>
             <td>{{ u }}</td>
             <td>{{ u.username }}</td>
-            <td>{% for m in u.picker_memberships.all %}
+            <td>{% for m in u.picker.picker_memberships.all %}
                 {{ m.group }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
             </td>
         </tr>

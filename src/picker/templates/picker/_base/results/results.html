@@ -10,7 +10,7 @@
     {% with gameset.results as results %}
     <p>
         {% if gameset.points %}<strong>Final points total:</strong> {{ gameset.points }}<br>{% endif %}
-        <em class="autopick">Note: Italicized user names indicate auto-picker selections</em>
+        <em class="autopick">Note: Italicized picker names indicate auto-picker selections</em>
     </p>
     {% include "picker/inclusions/byes.html" %}
     <div class="panel panel-default">
@@ -31,7 +31,7 @@
             {% for result in results %}
             <tr>
                 <td>
-                    <strong class="username {{ result.is_autopicked|yesno:"auto,user" }}pick">{{ result.user }}</strong>
+                    <strong class="pickername {{ result.is_autopicked|yesno:"auto,picker" }}pick">{{ result.picker }}</strong>
                 </td>
                 <td>{{ result.progress }}</td>
                 <td>{{ result.points|yesno:"set,pending" }}</td>
@@ -61,11 +61,11 @@
             <tr>
                 <td>{{ wp.place }}</td>
                 <td>
-                    <strong class="username {{ wp.is_autopicked|yesno:"auto,user" }}pick">{{ wp.user }}</strong>
+                    <strong class="pickername {{ wp.is_autopicked|yesno:"auto,picker" }}pick">{{ wp.picker }}</strong>
                 </td>
                 <td>{{ wp.correct }}</td>
                 {% for pick in wp.gamepicks.games_started_display %}
-                <td class="{% user_result pick display_results %}">
+                <td class="{% picker_result pick display_results %}">
                     {{ pick.1 }}
                 </td>
                 {% endfor %}

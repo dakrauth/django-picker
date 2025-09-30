@@ -1,14 +1,14 @@
 {% extends league_base %}
 {% load picker_tags %}
 {% block title %}Roster Profile{% endblock %}
-{% favorite_team profile.user as fav %}
+{% favorite_team picker as fav %}
 {% block fav_team %}team-{{ fav.abbr|default:"none"|lower }}{% endblock fav_team %}
 {% block main_content %}
 <div class="media">
     <div class="media-body">
-        <h1>{{ profile.user.username }}</h1>
+        <h1>{{ picker.name }}</h1>
         <p>
-            Since {{ profile.user.date_joined|date:"M j, Y" }}
+            Since {{ picker.date_joined|date:"M j, Y" }}
         </p>
     </div>
 </div>

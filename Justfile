@@ -41,6 +41,7 @@ update: venv
 demo-init:
     rm -f demo/demo.sqlite3
     {{DJ}} migrate --no-input
+    echo TODO
     {{DJ}} loaddata demo/fixtures/picker.json
     {{DJ}} import_picks tests/nfl2024.json tests/quidditch.json tests/eng1.json
 
@@ -51,6 +52,12 @@ demo *args='':
 # Create virtual environment and install / update all dev dependencies
 init: info update demo-init
     @echo Initialization complete
+
+graph:
+    brew upgrade graphviz
+    {{PIP}} install -U pygraphviz
+    {{DJ}} graph_models picker -o resources/models.png -t django2018
+    open resources/models.png
 
 # Run test suite
 test *args='':
@@ -119,10 +126,10 @@ upload:
 # Run linter and code formatter tools
 lint:
     @echo Linting...
-    -{{BIN}}/ruff check picker tests demo
+    -{{BIN}}/ruff check src/picker tests demo
 
     @echo Format checks...
-    -{{BIN}}/ruff format --diff --line-length 100 picker tests demo
+    -{{BIN}}/ruff format --diff --line-length 100 src/picker tests demo
 
 # Build the demo Docker container
 docker-build *args='':

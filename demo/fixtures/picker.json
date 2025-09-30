@@ -180,6 +180,96 @@
     }
 },
 {
+    "model": "picker.picker",
+    "pk": 1,
+    "fields": {
+        "name": "demo",
+        "is_active": true,
+        "user": 1
+    }
+},
+{
+    "model": "picker.picker",
+    "pk": 2,
+    "fields": {
+        "name": "user1",
+        "is_active": true,
+        "user": 2
+    }
+},
+{
+    "model": "picker.picker",
+    "pk": 3,
+    "fields": {
+        "name": "user2",
+        "is_active": true,
+        "user": 3
+    }
+},
+{
+    "model": "picker.picker",
+    "pk": 4,
+    "fields": {
+        "name": "user3",
+        "is_active": true,
+        "user": 4
+    }
+},
+{
+    "model": "picker.picker",
+    "pk": 5,
+    "fields": {
+        "name": "user4",
+        "is_active": true,
+        "user": 5
+    }
+},
+{
+    "model": "picker.picker",
+    "pk": 6,
+    "fields": {
+        "name": "user5",
+        "is_active": true,
+        "user": 6
+    }
+},
+{
+    "model": "picker.picker",
+    "pk": 7,
+    "fields": {
+        "name": "user6",
+        "is_active": true,
+        "user": 7
+    }
+},
+{
+    "model": "picker.picker",
+    "pk": 8,
+    "fields": {
+        "name": "user7",
+        "is_active": true,
+        "user": 8
+    }
+},
+{
+    "model": "picker.picker",
+    "pk": 9,
+    "fields": {
+        "name": "user8",
+        "is_active": true,
+        "user": 9
+    }
+},
+{
+    "model": "picker.picker",
+    "pk": 10,
+    "fields": {
+        "name": "user9",
+        "is_active": true,
+        "user": 10
+    }
+},
+{
     "model": "picker.league",
     "pk": 1,
     "fields": {
@@ -239,7 +329,7 @@
     "model": "picker.pickermembership",
     "pk": 1,
     "fields": {
-        "user": 1,
+        "picker": 1,
         "group": 1,
         "status": "ACTV",
         "autopick": "RAND"
@@ -249,7 +339,7 @@
     "model": "picker.pickermembership",
     "pk": 2,
     "fields": {
-        "user": 2,
+        "picker": 2,
         "group": 1,
         "status": "ACTV",
         "autopick": "RAND"
@@ -259,7 +349,7 @@
     "model": "picker.pickermembership",
     "pk": 3,
     "fields": {
-        "user": 3,
+        "picker": 3,
         "group": 1,
         "status": "ACTV",
         "autopick": "RAND"
@@ -269,7 +359,7 @@
     "model": "picker.pickermembership",
     "pk": 4,
     "fields": {
-        "user": 4,
+        "picker": 4,
         "group": 1,
         "status": "ACTV",
         "autopick": "RAND"
@@ -279,7 +369,7 @@
     "model": "picker.pickermembership",
     "pk": 5,
     "fields": {
-        "user": 5,
+        "picker": 5,
         "group": 1,
         "status": "ACTV",
         "autopick": "RAND"
@@ -289,7 +379,7 @@
     "model": "picker.pickermembership",
     "pk": 6,
     "fields": {
-        "user": 6,
+        "picker": 6,
         "group": 1,
         "status": "ACTV",
         "autopick": "RAND"
@@ -299,7 +389,7 @@
     "model": "picker.pickermembership",
     "pk": 7,
     "fields": {
-        "user": 7,
+        "picker": 7,
         "group": 1,
         "status": "ACTV",
         "autopick": "RAND"
@@ -309,7 +399,7 @@
     "model": "picker.pickermembership",
     "pk": 8,
     "fields": {
-        "user": 8,
+        "picker": 8,
         "group": 1,
         "status": "ACTV",
         "autopick": "RAND"
@@ -319,7 +409,7 @@
     "model": "picker.pickermembership",
     "pk": 9,
     "fields": {
-        "user": 9,
+        "picker": 9,
         "group": 1,
         "status": "ACTV",
         "autopick": "RAND"
@@ -329,7 +419,7 @@
     "model": "picker.pickermembership",
     "pk": 11,
     "fields": {
-        "user": 1,
+        "picker": 1,
         "group": 2,
         "status": "ACTV",
         "autopick": "RAND"
@@ -339,7 +429,7 @@
     "model": "picker.pickermembership",
     "pk": 12,
     "fields": {
-        "user": 2,
+        "picker": 2,
         "group": 2,
         "status": "ACTV",
         "autopick": "RAND"

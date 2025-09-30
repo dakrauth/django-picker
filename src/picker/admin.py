@@ -67,11 +67,6 @@ class GameSetAdmin(admin.ModelAdmin):
     form = GameSetForm
 
 
-@admin.register(picker.Preference)
-class PreferenceAdmin(admin.ModelAdmin):
-    list_display = ("user", "autopick")
-
-
 class GamePickInlineForm(forms.ModelForm):
     winner = forms.ModelChoiceField(queryset=picker.Team.objects.none(), required=False)
     model = picker.GamePick
@@ -103,8 +98,8 @@ class GamePickInline(admin.TabularInline):
 
 @admin.register(picker.PickSet)
 class PickSetAdmin(admin.ModelAdmin):
-    list_display = ("user", "gameset", "league")
-    list_filter = ("user", "gameset")
+    list_display = ("picker", "gameset", "league")
+    list_filter = ("picker", "gameset")
     # fields = ('points', 'strategy')
     inlines = [GamePickInline]
 
@@ -121,3 +116,8 @@ class PickerGroupingAdmin(admin.ModelAdmin):
     list_display = ("name", "id", "status", "category")
     filter_horizontal = ["leagues"]
     inlines = [PickerMembershipInline]
+
+
+@admin.register(picker.Picker)
+class PickerPickerAdmin(admin.ModelAdmin):
+    list_display = ("user", "is_active")

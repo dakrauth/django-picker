@@ -1,52 +1,186 @@
+from functools import cached_property
 import itertools
 
 from django.db import models
+from django.db.models import Sum, Count, Q, F, Func, IntegerField
 from django.conf import settings
 from django.utils import timezone
 from django.dispatch import Signal
-from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.db.models.functions import Abs, Cast
 
 from . import sports
 from ..exceptions import PickerResultException
 from .. import utils
 
 __all__ = [
-    "Preference",
+    "Picker",
     "PickerGrouping",
     "PickerFavorite",
     "PickerMembership",
     "PickSet",
     "GamePick",
     "GameSetPicks",
-    "active_users_for_league",
+    "active_pickers_for_league",
 ]
 
 
-class PreferenceManager(models.Manager):
-    def for_user(self, user):
-        return self.get_or_create(user=user)[0]
+class Round(Func):
+    function = "ROUND"
+    template = "%(function)s(%(expressions)s, 1)"
 
 
-class Preference(models.Model):
-    class Autopick(models.TextChoices):
-        NONE = "NONE", "None"
-        RAND = "RAND", "Random"
+class RosterStats:
+    def __init__(self, picker, league, season=None, **kwargs):
+        self.picker = picker
+        self.season = season
+        self.league = league
+        self.__dict__.update(kwargs)
 
-    autopick = models.CharField(max_length=4, choices=Autopick.choices, default=Autopick.RAND)
+    def __repr__(self):
+        return f"{__class__.__name__}(picker={self.picker}, correct={self.correct})"
+
+
+class PickerManager(models.Manager):
+    def active(self, **kwargs):
+        return self.filter(is_active=True, user__is_active=True, **kwargs)
+
+    def create(self, user=None, name=None, is_active=True):
+        if user is None and name is None:
+            raise ValidationError("Either user or name required")
+
+        if not name:
+            name = user.username
+
+        return super().create(user=user, name=name, is_active=is_active)
+
+
+class PickerStatsManager(models.Manager):
+    stats_prefix = "_pickerstats_v2_"
+
+    def get_annotations(self, q=None):
+        prefix = self.stats_prefix
+        is_winner_q = Q(picksets__is_winner=True)
+        points_q = Q(picksets__gameset__points__gt=0)
+        if q:
+            is_winner_q &= q
+            points_q &= q
+
+        return {
+            f"{prefix}correct": Sum("picksets__correct", filter=q, default=0),
+            f"{prefix}wrong": Sum("picksets__wrong", filter=q, default=0),
+            f"{prefix}picksets_played": Count("picksets__id", filter=q),
+            f"{prefix}picksets_won": Count("picksets__pk", filter=is_winner_q),
+            f"{prefix}points": Sum("picksets__points", filter=q),
+            f"{prefix}total_points_weeks": Count("picksets", filter=points_q),
+            f"{prefix}actual_points": Sum("picksets__gameset__points", filter=q),
+            f"{prefix}points_delta": Sum(
+                Abs(
+                    Cast(F("picksets__points"), output_field=IntegerField()) -
+                    Cast(F("picksets__gameset__points"), output_field=IntegerField())
+                ),
+                filter=points_q,
+            ),
+            f"{prefix}avg_points_delta": F(f"{prefix}points_delta") / F(f"{prefix}total_points_weeks"),
+            f"{prefix}total_correct_wrong": F(f"{prefix}correct") + F(f"{prefix}wrong"),
+            f"{prefix}pct": Round(
+                F(f"{prefix}correct") * 100.0 / (F(f"{prefix}correct") + F(f"{prefix}wrong"))
+            ),
+        }
+
+    def stats_queryset(self, league, group=None, season=None, picker=None):
+        q = Q(picksets__gameset__league=league)
+        if season:
+            q &= Q(picksets__gameset__season=season)
+
+        annotations = self.get_annotations(q)
+        queryset = self.filter(Q(picksets__correct__gt=0) | Q(picksets__wrong__gt=0))
+
+        if group:
+            queryset = queryset.filter(picker_memberships__group=group)
+
+        if picker:
+            queryset = queryset.filter(id=picker.id)
+
+        return queryset.annotate(**annotations)
+
+    def _prefixed_attrs(self, obj):
+        prefix = self.stats_prefix
+        return {k.replace(prefix, ""): v for k, v in vars(obj).items() if k.startswith(prefix)}
+
+    def _for_group(self, group, league, season=None):
+        prefix = self.stats_prefix
+        queryset = self.stats_queryset(league, group, season).order_by(
+            f"-{prefix}correct", f"{prefix}points_delta", f"-{prefix}picksets_won"
+        )
+
+        items = []
+        for obj in queryset:
+            items.append(RosterStats(obj, league, season, **self._prefixed_attrs(obj)))
+
+        return utils.weighted_standings(items)
+
+    def group_stats(self, group, league, season=None):
+        all_stats = self._for_group(group, league)
+        by_picker = {e.picker: e for e in all_stats}
+
+        season_stats = self._for_group(group, league, season or league.current_season)
+        return [(stat, by_picker[stat.picker]) for stat in season_stats]
+
+    def for_picker(self, picker, league):
+        seasons = list(league.available_seasons) + [None]
+        items = []
+        for season in seasons:
+            queryset = self.stats_queryset(league, season=season, picker=picker)
+            if not queryset:
+                continue
+
+            r = RosterStats(picker, league, season, **self._prefixed_attrs(queryset[0]))
+            if r.picksets_played:
+                items.append(r)
+
+        return items
+
+
+class Picker(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    is_active = models.BooleanField()
+    autopick_enabled = models.BooleanField(default=False)
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="picker_preferences",
+        on_delete=models.SET_NULL,
+        related_name="picker",
+        null=True,
+        blank=True,
     )
 
-    objects = PreferenceManager()
+    objects = PickerManager()
+    stats = PickerStatsManager()
 
     def __str__(self):
-        return str("{} Preference".format(self.user))
+        return self.name
 
-    @property
-    def should_autopick(self):
-        return self.autopick != self.Autopick.NONE
+    @cached_property
+    def is_manager(self):
+        return self.user.is_superuser or self.user.is_staff
+
+    @cached_property
+    def email(self):
+        return self.user.email
+
+    @cached_property
+    def last_login(self):
+        return self.user.last_login
+
+    @classmethod
+    def from_user(cls, user):
+        if not user.id:
+            return None
+
+        try:
+            return cls.objects.get(user=user)
+        except Picker.DoesNotExist:
+            return None
 
 
 class PickerGroupingManager(models.Manager):
@@ -78,12 +212,19 @@ class PickerGrouping(models.Model):
 
 
 class PickerFavorite(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    picker = models.ForeignKey(
+        Picker,
+        on_delete=models.CASCADE,
+        related_name="picker_favorites",
+        null=True,
+        blank=True,
+        default=None,
+    )
     league = models.ForeignKey(sports.League, on_delete=models.CASCADE)
     team = models.ForeignKey(sports.Team, null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        return "{}: {} ({})".format(self.user, self.team, self.league)
+        return "{}: {} ({})".format(self.picker, self.team, self.league)
 
     def save(self, *args, **kws):
         if self.team and self.team.league != self.league:
@@ -106,8 +247,11 @@ class MembershipManager(models.Manager):
             )
         )
 
-    def for_user(self, user, league=None):
-        kwargs = {"user": user}
+    def for_picker(self, picker, league=None):
+        if not (isinstance(picker, Picker) and picker.is_active):
+            return self.none()
+
+        kwargs = {"picker": picker}
         if league:
             kwargs["group__leagues"] = league
 
@@ -125,10 +269,13 @@ class PickerMembership(models.Model):
         SUSPENDED = "SUSP", "Suspended"
         MANAGER = "MNGT", "Manager"
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+    picker = models.ForeignKey(
+        Picker,
         on_delete=models.CASCADE,
         related_name="picker_memberships",
+        null=True,
+        blank=True,
+        default=None,
     )
     group = models.ForeignKey(PickerGrouping, on_delete=models.CASCADE, related_name="members")
     status = models.CharField(max_length=4, choices=Status.choices, default=Status.ACTIVE)
@@ -137,7 +284,7 @@ class PickerMembership(models.Model):
     objects = MembershipManager()
 
     def __str__(self):
-        return f"{self.user}@{self.group}"
+        return f"{self.picker}@{self.group}"
 
     @property
     def is_active(self):
@@ -147,9 +294,13 @@ class PickerMembership(models.Model):
     def is_management(self):
         return self.status == self.Status.MANAGER
 
+    @property
+    def should_autopick(self):
+        return self.autopick != self.Autopick.NONE
 
-def active_users_for_league(league, **kwargs):
-    return get_user_model().objects.filter(
+
+def active_pickers_for_league(league, **kwargs):
+    return Picker.objects.filter(
         is_active=True,
         picker_memberships__group__leagues=league,
         picker_memberships__status__in=(
@@ -162,11 +313,11 @@ def active_users_for_league(league, **kwargs):
 
 
 class PickSetManager(models.Manager):
-    def for_gameset_user(self, gameset, user, strategy=None, autopick=False):
+    def for_gameset_picker(self, gameset, picker, strategy=None, autopick=False):
         Strategy = self.model.Strategy
-        strategy = strategy or Strategy.USER
+        strategy = strategy or Strategy.PICKER
         picks, created = self.get_or_create(
-            gameset=gameset, user=user, defaults={"strategy": strategy}
+            gameset=gameset, picker=picker, defaults={"strategy": strategy}
         )
         if created and autopick:
             picks.points = gameset.league.random_points()
@@ -185,22 +336,26 @@ class PickSetManager(models.Manager):
 
 class PickSet(models.Model):
     class Strategy(models.TextChoices):
-        USER = "USER", "User"
+        PICKER = "PICK", "Picker"
         RANDOM = "RAND", "Random"
         HOME = "HOME", "Home Team"
         BEST = "BEST", "Best Record"
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="picksets"
+    picker = models.ForeignKey(
+        Picker,
+        on_delete=models.CASCADE,
+        related_name="picksets",
+        null=True,
+        blank=True,
+        default=None,
     )
-
     gameset = models.ForeignKey(sports.GameSet, on_delete=models.CASCADE, related_name="picksets")
     points = models.PositiveSmallIntegerField(default=0)
     correct = models.PositiveSmallIntegerField(default=0)
     wrong = models.PositiveSmallIntegerField(default=0)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-    strategy = models.CharField(max_length=4, choices=Strategy.choices, default=Strategy.USER)
+    strategy = models.CharField(max_length=4, choices=Strategy.choices, default=Strategy.PICKER)
     is_winner = models.BooleanField(default=False)
 
     objects = PickSetManager()
@@ -208,14 +363,14 @@ class PickSet(models.Model):
     updated_signal = Signal()
 
     class Meta:
-        unique_together = (("user", "gameset"),)
+        unique_together = (("picker", "gameset"),)
 
     def __str__(self):
-        return "%s %s %d" % (self.gameset, self.user, self.correct)
+        return "%s %s %d" % (self.gameset, self.picker, self.correct)
 
     @property
     def is_autopicked(self):
-        return self.strategy != self.Strategy.USER
+        return self.strategy != self.Strategy.PICKER
 
     @property
     def is_complete(self):
@@ -285,7 +440,7 @@ class GamePick(models.Model):
         ordering = ("game__start_time", "game__away")
 
     def __str__(self):
-        return "%s: %s - Game %d" % (self.pick.user, self.winner, self.game.id)
+        return f"{self.pick.picker}: {self.winner} - Game {self.game.id}"
 
     def set_random_winner(self, force=False):
         if self.winner is None or force:
@@ -346,11 +501,22 @@ class GameSetPicks(sports.GameSet):
     class Meta:
         proxy = True
 
-    def pick_for_user(self, user):
+    def pick_for_picker(self, picker):
         try:
-            return self.picksets.select_related().get(user=user)
+            return self.picksets.select_related().get(picker=picker)
         except models.ObjectDoesNotExist:
             return None
+
+    def _update_points(self, result):
+        last_game = self.last_game
+        if not (result["home"] == last_game.home.abbr and result["status"].startswith("F")):
+            return
+
+        score = int(result["home_score"]) + int(result["away_score"])
+        if self.points != score and last_game.winner:
+            if timezone.now() > last_game.end_time:
+                self.points = score
+                self.save()
 
     def update_results(self, results):
         """
@@ -361,6 +527,7 @@ class GameSetPicks(sports.GameSet):
             "away_score": 10,
             "status": "Final",
             "winner": "HOME",
+            "start": "2025-10-15T13:00Z"
         }]}
         """
 
@@ -370,13 +537,17 @@ class GameSetPicks(sports.GameSet):
         if results["sequence"] != self.sequence or results["season"] != self.season:
             raise PickerResultException("Results not updated, wrong season or week")
 
-        games = sorted(results["games"], key=lambda g: g.get("start"))
-        completed = {g["home"]: g for g in games if g["status"].startswith("F")}
+        results_games = sorted(results["games"], key=lambda g: g.get("start"))
+        completed = {g["home"]: g for g in results_games if g["status"].startswith("F")}
         if not completed:
             return (0, None)
 
         count = 0
-        for game in self.games.incomplete(home__abbr__in=completed.keys()):
+        all_games = list(self.games.select_related("home", "away"))
+        incomplete_games = [
+            g for g in all_games if g.home.abbr in completed and g.status == g.Status.UNPLAYED
+        ]
+        for game in incomplete_games:
             result = completed.get(game.home.abbr, None)
             if result:
                 winner = result["winner"]
@@ -389,15 +560,7 @@ class GameSetPicks(sports.GameSet):
                 )
                 count += 1
 
-        result_final = games[-1]
-        if result_final["status"].startswith("F"):
-            result_score = int(result_final["home_score"]) + int(result_final["away_score"])
-            last_game = self.last_game
-            if self.points != result_score and last_game.winner:
-                if timezone.now() > last_game.end_time:
-                    self.points = result_score
-                    self.save()
-
+        self._update_points(results_games[-1])
         if count:
             self.update_pick_status()
 
@@ -414,6 +577,6 @@ class GameSetPicks(sports.GameSet):
 
     def results(self):
         picks = list(self.picksets.select_related())
-        return utils.sorted_standings(
-            picks, key=lambda ps: (ps.correct, -ps.points_delta), reverse=True
+        return utils.weighted_standings(
+            sorted(picks, key=lambda ps: (ps.correct, -ps.points_delta), reverse=True)
         )

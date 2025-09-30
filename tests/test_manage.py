@@ -4,7 +4,7 @@ from django.urls import reverse
 
 @pytest.mark.django_db
 class TestViews:
-    def test_require_manager(self, client, league, gamesets, user):
+    def test_require_manager(self, client, league, gamesets, picker):
         # /<league>/manage/   picker.views.manage.ManagementHome  picker-manage
         r = client.get(reverse("picker-manage", args=["hq"]))
         assert r.status_code == 302

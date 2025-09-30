@@ -64,8 +64,8 @@ To test:
 Meta
 ----
 
-:Version: 2.3.0
-:Requirements: Python >= 3.10, Django >= 4.2
+:Version: 3.0.0
+:Requirements: Python >= 3.11, Django >= 5.1
 :License: MIT (see ``LICENSE`` file for more information)
 :Source: https://github.com/dakrauth/django-picker
 

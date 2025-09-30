@@ -11,7 +11,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 from .. import utils
-from ..models import League, Preference, PickerMembership
+from ..models import League, Picker, PickerMembership
 
 
 class SimpleFormMixin(FormMixin):
@@ -60,6 +60,16 @@ class SimplePickerViewBase(TemplateView):
     def league(self):
         return get_object_or_404(League.objects.active(), slug=self.kwargs["league"])
 
+    @cached_property
+    def picker(self):
+        if not self.request.user.id:
+            return None
+
+        try:
+            return Picker.objects.get(user=self.request.user)
+        except Picker.DoesNotExist:
+            return None
+
     def get_template_names(self, template_override=None):
         if template_override is None and self.template_name is None:
             raise ImproperlyConfigured(
@@ -80,6 +90,7 @@ class SimplePickerViewBase(TemplateView):
             {
                 "now": timezone.now(),
                 "league": league,
+                "picker": self.picker,
                 "season": self.season or league.current_season,
                 "league_base": loader.select_template(
                     [
@@ -106,12 +117,8 @@ class SimplePickerViewBase(TemplateView):
 
 class PickerViewBase(LoginRequiredMixin, SimplePickerViewBase):
     def get_context_data(self, **kwargs):
-        return super().get_context_data(
-            preferences=Preference.objects.get(user=self.request.user),
-            memberships=self.memberships,
-            **kwargs,
-        )
+        return super().get_context_data(memberships=self.memberships, **kwargs)
 
     @cached_property
     def memberships(self):
-        return list(PickerMembership.objects.for_user(self.request.user, league=self.league))
+        return list(PickerMembership.objects.for_picker(self.picker, league=self.league))
