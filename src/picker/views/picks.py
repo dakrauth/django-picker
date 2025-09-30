@@ -1,7 +1,5 @@
-import pdb
 from django.utils.functional import cached_property
 from django.shortcuts import get_object_or_404, get_list_or_404
-import ipdb
 
 from .. import forms
 from ..stats import RosterStats
