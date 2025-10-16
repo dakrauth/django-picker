@@ -3,6 +3,16 @@ django-picker
 
 .. image:: https://github.com/dakrauth/picker/workflows/Test/badge.svg
     :target: https://github.com/dakrauth/picker/actions
+    :alt: GitHub Actions
+
+.. image:: https://img.shields.io/pypi/pyversions/picker.svg
+    :target: https://pypi.org/project/picker/    
+    :alt: Supported Python versions
+
+.. image:: https://img.shields.io/pypi/djversions/picker.svg
+   :target: https://pypi.org/project/picker/
+   :alt: Supported Django versions
+
 
 A Django-based sports picker app for various leagues (NFL, English Premier, etc).
 
