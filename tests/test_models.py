@@ -196,9 +196,6 @@ class TestLeague:
 
 @pytest.mark.django_db
 class TestTeam:
-    def test_season_stats_from_game(self, gameset):
-        assert hasattr(gameset.games.all()[0].home, "season_wins")
-    
     def test_team_season_record(self, teams):
         t = teams[0]
         r = t.season_record(1975)
@@ -213,12 +210,7 @@ class TestTeam:
         assert len(team.color_options) == 2
         assert team.byes().count() == 0
         assert team.complete_record() == [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
-
-        sr = Team.objects.season_record(league.current_season, team)
-        assert sr.team == team
-        for k in ["season_wins", "season_losses", "season_ties"]:
-            assert hasattr(sr, k)
-            assert isinstance(getattr(sr, k), int)
+        assert team.record == (0, 0, 0)
 
 
 @pytest.mark.django_db

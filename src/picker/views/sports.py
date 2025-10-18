@@ -17,9 +17,7 @@ class Teams(SimplePickerViewBase):
     template_name = "@teams/listing.html"
 
     def get_context_data(self, **kwargs):
-        return super().get_context_data(
-            teams=self.league.teams.select_related("conference", "division"), **kwargs
-        )
+        return super().get_context_data(teams=self.league.team_list, **kwargs)
 
 
 class Schedule(SimplePickerViewBase):
