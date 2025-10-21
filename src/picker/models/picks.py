@@ -568,7 +568,9 @@ class GameSetPicks(sports.GameSet):
 
     def winners(self):
         if self.points:
-            yield from itertools.takewhile(lambda i: i.place == 1, self.results())
+            for r in self.results():
+                if r.place == 1:
+                    yield r.picker
 
     def update_pick_status(self):
         winners = set(w.id for w in self.winners())
