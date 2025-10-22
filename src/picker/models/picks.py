@@ -1,5 +1,4 @@
 from functools import cached_property
-import itertools
 
 from django.db import models
 from django.db.models import Sum, Count, Q, F, Func, IntegerField
@@ -76,12 +75,13 @@ class PickerStatsManager(models.Manager):
             f"{prefix}actual_points": Sum("picksets__gameset__points", filter=q),
             f"{prefix}points_delta": Sum(
                 Abs(
-                    Cast(F("picksets__points"), output_field=IntegerField()) -
-                    Cast(F("picksets__gameset__points"), output_field=IntegerField())
+                    Cast(F("picksets__points"), output_field=IntegerField())
+                    - Cast(F("picksets__gameset__points"), output_field=IntegerField())
                 ),
                 filter=points_q,
             ),
-            f"{prefix}avg_points_delta": F(f"{prefix}points_delta") / F(f"{prefix}total_points_weeks"),
+            f"{prefix}avg_points_delta": F(f"{prefix}points_delta")
+            / F(f"{prefix}total_points_weeks"),
             f"{prefix}total_correct_wrong": F(f"{prefix}correct") + F(f"{prefix}wrong"),
             f"{prefix}pct": Round(
                 F(f"{prefix}correct") * 100.0 / (F(f"{prefix}correct") + F(f"{prefix}wrong"))
@@ -573,9 +573,9 @@ class GameSetPicks(sports.GameSet):
                     yield r.picker
 
     def update_pick_status(self):
-        winners = set(w.id for w in self.winners())
+        winning_pickers = set(picker.id for picker in self.winners())
         for wp in self.picksets.all():
-            wp.update_status(wp.id in winners)
+            wp.update_status(wp.picker_id in winning_pickers)
 
     def results(self):
         picks = list(self.picksets.select_related())

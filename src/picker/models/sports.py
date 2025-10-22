@@ -7,7 +7,6 @@ from types import SimpleNamespace
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
-from django.db import OperationalError
 from django.utils.functional import cached_property
 from django.core.exceptions import ValidationError
 
@@ -96,11 +95,9 @@ class League(models.Model):
     @cached_property
     def team_list(self):
         return list(
-            Team.objects
-            .filter(league=self)
-            .select_related("league", "conference", "division")
+            Team.objects.filter(league=self).select_related("league", "conference", "division")
         )
-    
+
     @cached_property
     def team_dict(self):
         names = {}
@@ -219,7 +216,7 @@ class Division(models.Model):
 def valid_team_abbr(value):
     if value.startswith("__"):
         raise ValidationError('Team abbr cannot start with "__"')
-    
+
 
 class Team(models.Model):
     """
@@ -280,7 +277,9 @@ class Team(models.Model):
                 "pk",
                 filter=Q(status=Status.AWAY_WIN, home=self) | Q(status=Status.HOME_WIN, away=self),
             ),
-            ties=Count("pk", filter=Q(status=Status.TIE, away=self) | Q(status=Status.TIE, home=self)),
+            ties=Count(
+                "pk", filter=Q(status=Status.TIE, away=self) | Q(status=Status.TIE, home=self)
+            ),
         )
         return (values["wins"], values["losses"], values["ties"])
 

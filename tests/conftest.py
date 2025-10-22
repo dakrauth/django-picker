@@ -130,47 +130,46 @@ def grouping(league):
     return grouping
 
 
-def _make_mbr(picker, grouping):
-    PickerMembership.objects.create(picker=picker, group=grouping)
+def create_user(id, username=None):
+    username = username or f"user{id}"
+    return User.objects.create_user(username, f"user{id}@email.com", "password", id=id)
+
+
+def create_picker(user, grouping=None):
+    picker = Picker.objects.create(name=f"picker{user.id}", is_active=True, user=user)
+    if grouping:
+        PickerMembership.objects.create(picker=picker, group=grouping)
     return picker
-
-
-def create_user(username, email, passwd):
-    return User.objects.create_user(username, email, passwd)
-
-
-def create_picker(user):
-    return Picker.objects.create(name=user.username, is_active=True, user=user)
 
 
 @pytest.fixture
 def user():
     name = "".join(random.sample(list(string.ascii_lowercase) * 3, 8))
-    return create_user(name, f"{name}@example.com", "password")
+    return create_user(200, name)
 
 
 @pytest.fixture
 def superuser(client, grouping):
     su = User.objects.create_superuser(
-        username="super", email="super@example.com", password="password"
+        id=100, username="super", email="super@example.com", password="password"
     )
     client.force_login(su)
-    return _make_mbr(create_picker(su), grouping)
+    return create_picker(su, grouping)
 
 
 @pytest.fixture
 def picker(grouping):
-    return _make_mbr(create_picker(create_user("user1", "user1@example.com", "password")), grouping)
+    return create_picker(create_user(1), grouping)
 
 
 @pytest.fixture
 def picker2(grouping):
-    return _make_mbr(create_picker(create_user("user2", "user2@example.com", "password")), grouping)
+    return create_picker(create_user(2), grouping)
 
 
 @pytest.fixture
 def picker_ng():
-    return create_picker(create_user("user3", "user3@example.com", "password"))
+    return create_picker(create_user(3))
 
 
 @pytest.fixture

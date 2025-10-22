@@ -10,7 +10,6 @@ from picker.models import (
     PickerFavorite,
     Picker,
     Game,
-    Team,
     League,
     Alias,
     PickerGrouping,
@@ -187,11 +186,10 @@ class TestLeague:
         )
         assert league.gamesets.count() == 1
         assert league.current_gameset.id == gs.id
-    
+
     def test_random_points(self, league):
         # no games yet
         assert league.random_points() == 0
-
 
 
 @pytest.mark.django_db

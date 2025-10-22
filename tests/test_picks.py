@@ -1,3 +1,4 @@
+import os
 import pytest
 
 from django.urls import reverse
@@ -39,13 +40,10 @@ class TestViews:
         assert view.picker is None
         assert list(view.leagues) == []
 
-
     def test_results_unavailable(self, client, league, picker, grouping):
         client.force_login(picker.user)
         r = client.get(
-            reverse(
-                "picker-results-group", args=[league.abbr.lower(), str(grouping.id)]
-            )
+            reverse("picker-results-group", args=[league.abbr.lower(), str(grouping.id)])
         )
         assert b"Results currently unavailable" in r.content
 
@@ -80,13 +78,12 @@ class TestViews:
         url = reverse(name, args=args)
         r = client.get(url)
         assert r.status_code == 200
-    
+
     def test_picks_by_gameset_not_open(self, client, league, gameset, picker):
         client.force_login(picker.user)
         url = reverse(
-            "picker-picks-sequence", args=[
-                league.abbr.lower(), str(gameset.season), str(gameset.sequence)
-            ]
+            "picker-picks-sequence",
+            args=[league.abbr.lower(), str(gameset.season), str(gameset.sequence)],
         )
         r = client.get(url)
         assert r.status_code == 200
@@ -111,15 +108,18 @@ class PostPick:
         return r
 
 
-if 0:
+if "PICKER_SHOW_STATS" in os.environ:
+    from pprint import pprint
+
     def show_stats(grp_stats, msg):
-        from pprint import pprint
         print(f"##### {msg} #####")
         pprint(vars(grp_stats[0][0]))
         pprint(vars(grp_stats[1][0]))
 else:
+
     def show_stats(*args):
         pass
+
 
 @pytest.mark.django_db
 class TestPicksForm:
@@ -135,15 +135,23 @@ class TestPicksForm:
 
         GRF, HUF, RVN, SLY = [str(t.id) for t in teams]
 
-        #  GM,    WHO,    USER1, PTS1, USER2, PTS2, RES,  PTS, SC1, SC2,  WON
-        #   1, GRF @ HUF,   GRF,     ,   HUF,     , GRF,     ,   1,   0,
-        #   2, RVN @ SLY,   RVN,  100,   SLY,  200, RVN,  300,   1,   0, USER1
-
-        #   3, GRF @ RVN,   GRF,     ,   RVN,     , RVN,     ,   0,   1,
-        #   4, HUF @ SLY,   HUF,  200,   SLY,  300, SLY,  300,   0,   1, USER2
-
-        #   5, SLY @ GRF,   SLY,     ,   GRF,     , GRF,     ,   0,   1,
-        #   6, HUF @ RVN,   HUF,  300,   RVN,  400, HUF,  300,   1,   0, USER1
+        # +-----+----+-----------+------+------+------+------+-----+------+------+------+-----+
+        # | SEQ | GM | WHO       | U1   | PTS1 | U2   | PTS2 | WON | PTS  | ✅ 1 | ✅ 2  | WON |
+        # +=====+====+===========+======+======+======+======+=====+======+======+======+=====+
+        # |   1 |  1 | GRF @ HUF | GRF  |      | HUF  |      | GRF |      |    1 |    0 |     |
+        # +-----+----+-----------+------+------+------+------+-----+------+------+------+-----+
+        # |   1 |  2 | RVN @ SLY | RVN  | 100  | SLY  | 200  | RVN | 300  |    1 |    0 | U1  |
+        # +-----+----+-----------+------+------+------+------+-----+------+------+------+-----+
+        # |   2 |  3 | GRF @ RVN | GRF  |      | RVN  |      | RVN |      |    0 |    1 |     |
+        # +-----+----+-----------+------+------+------+------+-----+------+------+------+-----+
+        # |   2 |  4 | HUF @ SLY | HUF  | 200  | SLY  | 300  | SLY | 300  |    0 |    1 | U2  |
+        # +-----+----+-----------+------+------+------+------+-----+------+------+------+-----+
+        # |   3 |  5 | SLY @ GRF | SLY  |      | GRF  |      | GRF |      |    0 |    1 |     |
+        # +-----+----+-----------+------+------+------+------+-----+------+------+------+-----+
+        # |   3 |  6 | HUF @ RVN | HUF  | 300  | RVN  | 400  | HUF | 300  |    1 |    0 | U1  |
+        # +-----+----+-----------+------+------+------+------+-----+------+------+------+-----+
+        # |     |    |           | DIFF | 300  | DIFF | 200  |     |      |    3 |    3 |     |
+        # +-----+----+-----------+------+------+------+------+-----+------+------+------+-----+
 
         post_pick(picker1, 1, game_1=GRF, points="100")
         assert PickSet.objects.count() == 1
@@ -166,6 +174,8 @@ class TestPicksForm:
 
         post_pick(superuser, 1, game_1=GRF, game_2=RVN, points="300")
         assert PickSet.objects.filter(is_winner=True).count() == 1
+        assert PickSet.objects.filter(is_winner=True)[0].picker == picker1
+        assert picker1.picksets.get(gameset__sequence=1).is_winner is True
 
         show_stats(Picker.stats.group_stats(grouping, league, season=None), "Week 1 300 POINTS")
 

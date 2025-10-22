@@ -42,7 +42,7 @@ class TestMisc:
         team = league.teams.first()
         picker.picker_favorites.create(league=league, team=team)
         assert picker_tags.favorite_team({}, picker, league) == team
-    
+
     def test_picker_widget(self):
         league = League.objects.create(id=999, name="XFL", abbr="XFL")
         assert forms.get_picker_widget(league) == django_forms.RadioSelect
