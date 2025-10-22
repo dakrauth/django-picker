@@ -23,9 +23,10 @@ jobs:
     - name: Generate coverage XML report
       run: coverage xml
     - name: Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       env:
         PYTHON: ${{matrix.python-version}}
       with:
         env_vars: PYTHON
         token: ${{ secrets.CODECOF_TOKEN }}
+        slug: dakrauth/django-picker
