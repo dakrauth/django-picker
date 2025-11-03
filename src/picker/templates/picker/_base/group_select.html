@@ -1,9 +1,9 @@
 {% extends "picker/base.html" %}
 {% block score_strip %}{% endblock score_strip %}
 {% block main_content %}
-<h1>Your roster memberships</h1>
+<h1>Your memberships</h1>
 <ul>{% for mbr in memberships %}
-    <li><a href="{% url 'picker-roster-group' league.slug mbr.group.id %}">{{ mbr.group }}</a></li>
+    <li><a href="{% url view.redirect_view_name league.slug mbr.group.id %}">{{ mbr.group }}</a></li>
     {% endfor %}
 </ul>
 {% endblock main_content %}
