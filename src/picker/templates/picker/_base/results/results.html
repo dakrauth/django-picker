@@ -7,7 +7,6 @@
         <small><a href="{% url 'picker-results-season' gameset.league.slug group.id gameset.season %}">{{ gameset.season }}</a></small>
     </h1>
     {% season_nav gameset "results" %}
-    {% with gameset.results as results %}
     <p>
         {% if gameset.points %}<strong>Final points total:</strong> {{ gameset.points }}<br>{% endif %}
         <em class="autopick">Note: Italicized picker names indicate auto-picker selections</em>
@@ -79,6 +78,5 @@
         {% endwith %}
         {% endif %}
         </table>
-        {% endwith %}
     </div>
 {% endblock %}

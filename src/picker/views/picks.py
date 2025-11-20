@@ -1,6 +1,5 @@
 from django.utils.functional import cached_property
 from django.shortcuts import get_object_or_404, get_list_or_404
-
 from .. import forms
 from .base import SimplePickerViewBase, PickerViewBase, SimpleFormMixin
 from ..models import Picker, PickerGrouping, GameSetPicks
@@ -80,6 +79,7 @@ class Results(ResultsBase):
         gameset = GameSetPicks.objects.current_gameset(league=league)
         if gameset:
             context["gameset"] = gameset
+            context["results"] = gameset.results(context["group"])
         else:
             self.template_name = "@unavailable.html"
             context["heading"] = "Results currently unavailable"
@@ -91,9 +91,12 @@ class ResultsBySeason(ResultsBase):
     template_name = "@results/season.html"
 
     def get_context_data(self, **kwargs):
-        return super().get_context_data(
-            gamesets=GameSetPicks.objects.filter(league=self.league, season=self.season), **kwargs
-        )
+        gamesets = [
+            (gs, gs.winners(self.group))
+            for gs in GameSetPicks.objects.filter(league=self.league, season=self.season)
+        ]
+
+        return super().get_context_data(gamesets=gamesets, **kwargs)
 
 
 class ResultsByWeek(ResultsBase):

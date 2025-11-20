@@ -503,7 +503,7 @@ class GameSetPicks(sports.GameSet):
 
     def pick_for_picker(self, picker):
         try:
-            return self.picksets.select_related().get(picker=picker)
+            return self.picksets.get(picker=picker)
         except models.ObjectDoesNotExist:
             return None
 
@@ -566,19 +566,23 @@ class GameSetPicks(sports.GameSet):
 
         return (count, self.points)
 
-    def winners(self):
+    def winners(self, group):
         if self.points:
-            for r in self.results():
+            for r in self.results(group):
                 if r.place == 1:
                     yield r.picker
 
-    def update_pick_status(self):
-        winning_pickers = set(picker.id for picker in self.winners())
-        for wp in self.picksets.all():
-            wp.update_status(wp.picker_id in winning_pickers)
+    def pickset_query(self, group):
+        return self.picksets.filter(picker__picker_memberships__group=group).select_related("picker")
 
-    def results(self):
-        picks = list(self.picksets.select_related())
+    def update_pick_status(self):
+        for group in PickerGrouping.objects.active():
+            winning_pickers = set(picker.id for picker in self.winners(group))
+            for wp in self.pickset_query(group):
+                wp.update_status(wp.picker_id in winning_pickers)
+
+    def results(self, group):
+        picks = list(self.pickset_query(group))
         return utils.weighted_standings(
             sorted(picks, key=lambda ps: (ps.correct, -ps.points_delta), reverse=True)
         )

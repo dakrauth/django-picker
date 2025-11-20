@@ -9,12 +9,12 @@
             <th class="text-center">Week</th>
             <th>Winner(s)</th>
         </tr>
-        {% for gameset in gamesets %}
+        {% for gameset, winners in gamesets %}
         <tr>
             <td class="text-center">
                 <a href="{% url "picker-results-sequence" gameset.league.slug group.id gameset.season gameset.sequence %}">Week {{ gameset.sequence }}</a>
             </td>
-            <td>{% for w in gameset.winners %}
+            <td>{% for w in winners %}
                 <div style="display: inline-block; margin-left: 8px;">
                     <strong class="pickername">{{ w.picker }}</strong>
                 </div>{% if not forloop.last %}, {% endif %}
