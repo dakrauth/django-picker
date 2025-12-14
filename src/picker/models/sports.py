@@ -534,7 +534,11 @@ class Game(models.Model):
         ordering = ("start_time", "away")
 
     def __str__(self):
-        return "{} @ {} {}".format(self.away.abbr, self.home.abbr, self.gameset)
+        return "{} @ {} {}".format(
+            self.away.abbr if self.away else "TBD",
+            self.home.abbr if self.home else "TBD",
+            self.gameset,
+        )
 
     def to_dict(self):
         return {

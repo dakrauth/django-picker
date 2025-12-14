@@ -518,7 +518,7 @@ class GameSetPicks(sports.GameSet):
                 self.points = score
                 self.save()
 
-    def update_results(self, results):
+    def update_results(self, results, overwrite=False):
         """
         results schema: {'sequence': 1, 'season': 2018, 'games': [{
             "home": "HOME",
@@ -544,12 +544,30 @@ class GameSetPicks(sports.GameSet):
 
         count = 0
         all_games = list(self.games.select_related("home", "away"))
-        incomplete_games = [
-            g for g in all_games if g.home.abbr in completed and g.status == g.Status.UNPLAYED
-        ]
-        for game in incomplete_games:
+
+        def get_score(value):
+            if isinstance(value, int):
+                return value
+
+            if isinstance(value, str) and value.isdigit():
+                return int(value)
+
+            return 0
+
+        if overwrite:
+            games_to_update = all_games
+        else:
+            games_to_update = [
+                    g
+                    for g in all_games
+                    if g.home and (g.home.abbr in completed) and g.status == g.Status.UNPLAYED
+                ]
+
+        for game in games_to_update:
             result = completed.get(game.home.abbr, None)
             if result:
+                game.home_score = get_score(result.get("home_score"))
+                game.away_score = get_score(result.get("away_score"))
                 winner = result["winner"]
                 game.winner = (
                     game.home
@@ -573,7 +591,9 @@ class GameSetPicks(sports.GameSet):
                     yield r.picker
 
     def pickset_query(self, group):
-        return self.picksets.filter(picker__picker_memberships__group=group).select_related("picker")
+        return self.picksets.filter(picker__picker_memberships__group=group).select_related(
+            "picker"
+        )
 
     def update_pick_status(self):
         for group in PickerGrouping.objects.active():

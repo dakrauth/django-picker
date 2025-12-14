@@ -16,7 +16,7 @@
             </td>
             <td>{% for w in winners %}
                 <div style="display: inline-block; margin-left: 8px;">
-                    <strong class="pickername">{{ w.picker }}</strong>
+                    <strong class="pickername">{{ w }}</strong>
                 </div>{% if not forloop.last %}, {% endif %}
                 {% endfor %}
             </td>
