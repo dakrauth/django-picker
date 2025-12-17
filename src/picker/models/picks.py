@@ -558,10 +558,10 @@ class GameSetPicks(sports.GameSet):
             games_to_update = all_games
         else:
             games_to_update = [
-                    g
-                    for g in all_games
-                    if g.home and (g.home.abbr in completed) and g.status == g.Status.UNPLAYED
-                ]
+                g
+                for g in all_games
+                if g.home and (g.home.abbr in completed) and g.status == g.Status.UNPLAYED
+            ]
 
         for game in games_to_update:
             result = completed.get(game.home.abbr, None)

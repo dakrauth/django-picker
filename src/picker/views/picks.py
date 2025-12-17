@@ -103,15 +103,14 @@ class ResultsByWeek(ResultsBase):
     template_name = "@results/results.html"
 
     def get_context_data(self, **kwargs):
-        return super().get_context_data(
-            gameset=get_object_or_404(
-                GameSetPicks,
-                league=self.league,
-                season=self.season,
-                sequence=self.kwargs["sequence"],
-            ),
-            **kwargs,
+        gameset = get_object_or_404(
+            GameSetPicks,
+            league=self.league,
+            season=self.season,
+            sequence=self.kwargs["sequence"],
         )
+        results = gameset.results(self.group)
+        return super().get_context_data(gameset=gameset, results=results, **kwargs)
 
 
 #  Picks
