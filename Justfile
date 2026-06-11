@@ -4,10 +4,7 @@ set positional-arguments
 DEV := "./.dev"
 DIST := DEV / "dist"
 VENV :=  "./.venv"
-BIN := VENV / "bin"
-PIP := BIN / "python -m pip --require-venv"
-DJENV := "DJANGO_SETTINGS_MODULE=demo.settings PYTHONPATH=."
-DJ := DJENV + " " + BIN / "django-admin"
+DJ := "DJANGO_SETTINGS_MODULE=demo.settings PYTHONPATH=. uv run django-admin"
 
 
 # Display recipe listing
@@ -16,32 +13,14 @@ help:
 
 # Show all recipe variables
 info:
-    @echo dev = {{DEV}}
     @echo dist = {{DIST}}
-    @echo venv = {{VENV}}
-    @echo bin = {{BIN}}
-    @echo pip = {{PIP}}
     @echo dj = {{DJ}}
 
-# Create a virtual environment if needed
-venv:
-    #!/usr/bin/env bash
-    if [ ! -d {{VENV}} ]; then
-        echo Creating virtual env in dir {{VENV}} ...
-        python3 -m venv {{VENV}}
-    fi 
-
-# Update all dev dependencies
-update: venv
-    @echo Installing picker ...
-    {{PIP}} install -U -e .
-    {{PIP}} install -U -e ".[test,dev]"
 
 # Setup the demo project for non-docker development
 demo-init:
     rm -f demo/demo.sqlite3
     {{DJ}} migrate --no-input
-    echo TODO
     {{DJ}} loaddata demo/fixtures/picker.json
     {{DJ}} import_picks tests/nfl2024.json tests/quidditch.json tests/eng1.json
 
@@ -55,40 +34,44 @@ init: info update demo-init
 
 graph:
     brew upgrade graphviz
-    {{PIP}} install -U pygraphviz
+    uv pip install -U pygraphviz
     {{DJ}} graph_models picker -o resources/models.png -t django2018
     open resources/models.png
 
 # Run test suite
 test *args='':
-    {{BIN}}/pytest -vv -s --diff-width=60 "$@"
+    #!/usr/bin/env bash
+    for s in `python scripts/permute.py "py{312,313,314}-dj{52,60,main}"`; do
+        echo s =  $s
+    done
+    # uv run pytest -vv -s --diff-width=60 "$@"
+
+    # py{312,313,314}-dj{52,60,main}
+
 
 # RE-run test suite with just previous failures
 retest:
-    {{BIN}}/pytest -vv -s --diff-width=60 --lf
+    uv run pytest -vv -s --diff-width=60 --lf
 
 # Run all tox tests
 tox *args='':
     #!/usr/bin/env bash
     if [ -z "${args}" ]; then
-        {{BIN}}/tox
+        uv run tox
     else
-        {{BIN}}/tox "$@"
+        uv run tox "$@"
     fi
 
 # Run coverage report from test suite
 cov:
-    -{{BIN}}/coverage run -m pytest -vv -s
-    {{BIN}}/coverage report
-    {{BIN}}/coverage html
+    -uv run coverage run -m pytest -vv -s
+    uv run coverage report
+    uv run coverage html
 
 # Remove the virtual env dir
 rmvenv:
     #!/usr/bin/env bash
-    if [ -d {{VENV}} ]; then
-        if [ -s $VIRTUAL_ENV ]; then
-            echo You must now run `deactivate` manually
-        fi
+    if [ -d ./venv ]; then
         rm -rf {{VENV}}
     fi
 
@@ -117,7 +100,7 @@ purge: clean clean-dev rmvenv clean-build clean-eggs
 
 # Build sdist and wheel files for distribution
 build:
-    {{BIN}}/python -m build --outdir {{DIST}}
+    uv run python -m build --outdir {{DIST}}
 
 # Build distros and upload to PyPI
 upload:
@@ -126,10 +109,10 @@ upload:
 # Run linter and code formatter tools
 lint:
     @echo Linting...
-    -{{BIN}}/ruff check src/picker tests demo
+    -uv run ruff check src/picker tests demo
 
     @echo Format checks...
-    -{{BIN}}/ruff format --diff --line-length 100 src/picker tests demo
+    -uv run ruff format --diff --line-length 100 src/picker tests demo
 
 # Build the demo Docker container
 docker-build *args='':
@@ -143,10 +126,6 @@ docker-run *args='':
 # Execute a command in a running Docker container
 docker-exec *args='':
     docker compose exec app "$@"
-
-# Execute a pip command in the local non-docker venv
-pip *args='':
-    {{PIP}} "$@"
 
 version arg="":
     #!/usr/bin/env bash

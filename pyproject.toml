@@ -37,6 +37,27 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/dakrauth/django-picker"
 
+[dependency-groups]
+test = [
+    "pytest",
+    "coverage",
+    "pytest-django",
+    "pytest-cov",
+    "freezegun"
+]
+dev = [
+    "tox",
+    "build",
+    "ipython",
+    "twine",
+    "ruff",
+    "ipdb",
+    "django-extensions",
+    "pytest-sugar",
+    "pytest-clarity"
+]
+
+
 [project.optional-dependencies]
 test = [
     "pytest",
