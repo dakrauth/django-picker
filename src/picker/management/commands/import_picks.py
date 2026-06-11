@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from django.core.management.base import BaseCommand
 from picker import models as picker
 
@@ -13,9 +14,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for arg in options["filenames"]:
-            with open(arg) as fin:
-                data = json.loads(fin.read())
-
+            data = json.loads(Path(arg).read_text())
             schema = data["schema"]
             if schema == "complete" or schema == "league":
                 league_info, teams_info = picker.League.import_league(data)

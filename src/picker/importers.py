@@ -102,6 +102,8 @@ def import_league(cls, data):
                     divs[(div_name, conf_name)] = div
 
         colors = ",".join(tm.get("colors", []))
+        coach = tm.get("coach", "")
+        location = tm.get("location", "")
         team, created = league.teams.get_or_create(
             name=tm["name"],
             abbr=tm["abbr"],
@@ -111,9 +113,15 @@ def import_league(cls, data):
                 "conference": conf,
                 "division": div,
                 "logo": tm.get("logo", ""),
-                "location": tm.get("location", ""),
+                "coach": "coach",
+                "location": location,
             },
         )
+        if not created:
+            team.coach = coach
+            team.location = location
+            team.save()
+
         for alias in tm.get("aliases", []):
             team.aliases.get_or_create(name=alias)
 
