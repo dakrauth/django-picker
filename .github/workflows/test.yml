@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.12", "3.13", "3.14"]
     env:
       COVERAGE_OPTIONS: "-a"
     steps:
@@ -20,13 +20,3 @@ jobs:
         pip install tox tox-gh-actions coverage
     - name: Test with tox
       run: tox
-    - name: Generate coverage XML report
-      run: coverage xml
-    - name: Codecov
-      uses: codecov/codecov-action@v5
-      env:
-        PYTHON: ${{matrix.python-version}}
-      with:
-        env_vars: PYTHON
-        token: ${{ secrets.CODECOF_TOKEN }}
-        slug: dakrauth/django-picker

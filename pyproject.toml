@@ -17,25 +17,46 @@ requires-python = ">=3.11"
 classifiers = [
         "Environment :: Web Environment",
         "Framework :: Django",
-        "Framework :: Django :: 5.1",
         "Framework :: Django :: 5.2",
         "Framework :: Django :: 6.0",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
-        "Programming Language :: Python :: 3.12"
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14"
 ]
 
 dependencies = [
-    "Django>=5.1",
+    "Django>=5.2",
     "django-bootstrap5",
-    "Pillow>=11.3.0",
+    "Pillow",
     "python-dateutil>=2.8.1",
 ]
 
 [project.urls]
 Homepage = "https://github.com/dakrauth/django-picker"
+
+[dependency-groups]
+test = [
+    "tox",
+    "pytest",
+    "coverage",
+    "pytest-django",
+    "pytest-cov",
+    "freezegun"
+]
+dev = [
+    "tox",
+    "build",
+    "ipython",
+    "twine",
+    "ruff",
+    "ipdb",
+    "django-extensions",
+    "pytest-sugar",
+    "pytest-clarity"
+]
+
 
 [project.optional-dependencies]
 test = [
@@ -46,7 +67,6 @@ test = [
     "freezegun"
 ]
 dev = [
-    "tox",
     "build",
     "ipython",
     "twine",

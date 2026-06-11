@@ -53,8 +53,14 @@ docs/_build/
 target/
 demo.sqlite3
 .python-version
+.venv
+htmlcov
 venv
 .pylintrc
 .pytest_cache/
 .dev
 /.vscode
+
+test-all.txt
+.coverage
+

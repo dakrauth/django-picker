@@ -27,7 +27,7 @@ urlpatterns = (
     + [
         path("", home, name="demo-home"),
         path("admin/", admin.site.urls),
-        path("account/", include("django.contrib.auth.urls")),
+        path("accounts/", include("django.contrib.auth.urls")),
         path("<slug:league>/", include("picker.urls")),
     ]
     + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, show_indexes=True)
