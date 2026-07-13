@@ -5,7 +5,8 @@ DEV := "./.dev"
 DIST := DEV / "dist"
 VENV :=  "./.venv"
 DJ := "DJANGO_SETTINGS_MODULE=demo.settings PYTHONPATH=. uv run django-admin"
-
+COV := "DJANGO_SETTINGS_MODULE=demo.settings PYTHONPATH=. uv run --group test coverage"
+TEST := "DJANGO_SETTINGS_MODULE=demo.settings PYTHONPATH=. uv run --group test"
 
 # Display recipe listing
 help:
@@ -28,8 +29,8 @@ demo-init:
 demo *args='':
     {{DJ}} "$@"
 
-# Create virtual environment and install / update all dev dependencies
-init: info update demo-init
+# Create virtual environment and install all dev dependencies
+init: info demo-init
     @echo Initialization complete
 
 graph:
@@ -39,19 +40,38 @@ graph:
     open resources/models.png
 
 # Run test suite
+test-all *args='':
+    #!/usr/bin/env bash
+
+    date 2>&1 | tee test-all.txt
+    for python in 3.12 3.13 3.14; do
+        for django in 5.2 6.0; do
+            echo "---------------------------------" 2>&1 | tee -a test-all.txt
+            echo $python, $django 2>&1 | tee -a test-all.txt
+            echo "---------------------------------" 2>&1 | tee -a test-all.txt
+            {{TEST}} \
+                --python $python \
+                -w "Django~=$django" \
+                pytest -vv -s --diff-width=60 "$@" 2>&1 | tee -a test-all.txt
+        done
+    done
+
 test *args='':
     #!/usr/bin/env bash
-    for s in `python scripts/permute.py "py{312,313,314}-dj{52,60,main}"`; do
-        echo s =  $s
-    done
-    # uv run pytest -vv -s --diff-width=60 "$@"
+    DJANGO_SETTINGS_MODULE=demo.settings PYTHONPATH=. uv run --group test \
+        --python 3.12 \
+        -w "Django~=5.2" \
 
-    # py{312,313,314}-dj{52,60,main}
+        pytest -vv -s --diff-width=60 "$@"
 
 
 # RE-run test suite with just previous failures
 retest:
-    uv run pytest -vv -s --diff-width=60 --lf
+    DJANGO_SETTINGS_MODULE=demo.settings PYTHONPATH=. uv run \
+        --python 3.12 \
+        -w "Django~=5.2" \
+        --group test \
+        pytest -vv -s --diff-width=60 --lf
 
 # Run all tox tests
 tox *args='':
@@ -64,9 +84,9 @@ tox *args='':
 
 # Run coverage report from test suite
 cov:
-    -uv run coverage run -m pytest -vv -s
-    uv run coverage report
-    uv run coverage html
+    {{COV}} run -m pytest -vv -s
+    {{COV}} report
+    {{COV}} html
 
 # Remove the virtual env dir
 rmvenv:

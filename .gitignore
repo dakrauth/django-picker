@@ -60,3 +60,7 @@ venv
 .pytest_cache/
 .dev
 /.vscode
+
+test-all.txt
+.coverage
+

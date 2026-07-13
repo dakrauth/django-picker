@@ -70,7 +70,7 @@ class TestImporters:
         td = league.team_dict
         assert td["WAS"] == td["WSH"]
 
-        assert league.config("TEAM_PICKER_WIDGET") == "django.forms.RadioSelect"
+        assert league.config("TEAM_PICKER_WIDGET") == "demo.project.TemplateTeamChoice"
 
         tm = Team.objects.get(league=league, nickname="Jaguars")
         aliases = list(tm.aliases.values_list("name", flat=True))

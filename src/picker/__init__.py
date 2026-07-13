@@ -1,4 +1,4 @@
-__version__ = "3.1.0"
+__version__ = "3.2.0"
 VERSION = tuple(int(i) for i in __version__.split("."))
 
 default_app_config = "picker.apps.PickerConfig"
