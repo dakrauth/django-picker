@@ -38,6 +38,7 @@ Homepage = "https://github.com/dakrauth/django-picker"
 
 [dependency-groups]
 test = [
+    "tox",
     "pytest",
     "coverage",
     "pytest-django",

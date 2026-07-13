@@ -5,8 +5,8 @@ DEV := "./.dev"
 DIST := DEV / "dist"
 VENV :=  "./.venv"
 DJ := "DJANGO_SETTINGS_MODULE=demo.settings PYTHONPATH=. uv run django-admin"
-COV := "DJANGO_SETTINGS_MODULE=demo.settings PYTHONPATH=. uv run --group test coverage"
-TEST := "DJANGO_SETTINGS_MODULE=demo.settings PYTHONPATH=. uv run --group test"
+COV := "DJANGO_SETTINGS_MODULE=tests.settings PYTHONPATH=. uv run --group test coverage"
+TEST := "DJANGO_SETTINGS_MODULE=tests.settings PYTHONPATH=. uv run --group test"
 
 # Display recipe listing
 help:
@@ -58,7 +58,7 @@ test-all *args='':
 
 test *args='':
     #!/usr/bin/env bash
-    DJANGO_SETTINGS_MODULE=demo.settings PYTHONPATH=. uv run --group test \
+    {{TEST}} \
         --python 3.12 \
         -w "Django~=5.2" \
 
@@ -67,7 +67,7 @@ test *args='':
 
 # RE-run test suite with just previous failures
 retest:
-    DJANGO_SETTINGS_MODULE=demo.settings PYTHONPATH=. uv run \
+    {{TEST}} \
         --python 3.12 \
         -w "Django~=5.2" \
         --group test \
