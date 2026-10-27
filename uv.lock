@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -58,11 +58,11 @@ wheels = [
 
 [[package]]
 name = "certifi"
-version = "2026.6.17"
+version = "2026.10.18"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c9/c7/424b75da314c1045981bd9777432fad05a9e0c69daa4ed7e308bbaffe405/certifi-2026.6.17.tar.gz", hash = "sha256:024c88eeec92ca068db80f02b8b07c9cef7b9fe261d1d535abfd5abd6f6af432", size = 134594, upload-time = "2026-06-17T10:31:07.894Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7e/eb/a2aa1ac3ea30dd3f30ca57f40232138b6b0040719316ecb85daf61167771/certifi-2026.10.18.tar.gz", hash = "sha256:b9995d97b64d0431a5af837d8ca8cd6238104d1f319f04bd93ea43124d6c861e", size = 135227, upload-time = "2026-10-18T16:21:07.655Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ef/2f/c5464532e965badff2f4c4c1a3a83f5697f0d7c407ed0cda44aaa99bb451/certifi-2026.6.17-py3-none-any.whl", hash = "sha256:2227dcbaafe0d2f59279d1762ddddc37783ed4354594f194ffc31d20f41fc3db", size = 133289, upload-time = "2026-06-17T10:31:06.348Z" },
+    { url = "https://files.pythonhosted.org/packages/08/ba/95dd616042484f7c83a06974388b37b837732740ee70bc5dc715b5fcd55a/certifi-2026.10.18-py3-none-any.whl", hash = "sha256:73191c47aaa79da394e8fee2dbc2ec827432cab56311122c9e47abf79e390f62", size = 134093, upload-time = "2026-10-18T16:21:06.276Z" },
 ]
 
 [[package]]
@@ -354,9 +354,9 @@ resolution-markers = [
     "python_full_version < '3.12'",
 ]
 dependencies = [
-    { name = "asgiref", marker = "python_full_version < '3.12'" },
-    { name = "sqlparse", marker = "python_full_version < '3.12'" },
-    { name = "tzdata", marker = "python_full_version < '3.12' and sys_platform == 'win32'" },
+    { name = "asgiref" },
+    { name = "sqlparse" },
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a9/26/889449d521ae508b26de715954faecd8bcf3f740affb81b2d146a83b42a5/django-5.2.16.tar.gz", hash = "sha256:59ea02020c3136fce14bef0bbece21a10a4febef5eed1c51c22ae468efa22200", size = 10890894, upload-time = "2026-07-07T13:52:17.005Z" }
 wheels = [
@@ -371,9 +371,9 @@ resolution-markers = [
     "python_full_version >= '3.12'",
 ]
 dependencies = [
-    { name = "asgiref", marker = "python_full_version >= '3.12'" },
-    { name = "sqlparse", marker = "python_full_version >= '3.12'" },
-    { name = "tzdata", marker = "python_full_version >= '3.12' and sys_platform == 'win32'" },
+    { name = "asgiref" },
+    { name = "sqlparse" },
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/89/55/664f24ff81c9ea19cb7dfc851afeae1f3c2390c7aee01d4ded68b5c1580d/django-6.0.7.tar.gz", hash = "sha256:2998503fc083124fb58037084bfa00de323c7c743f05f1b4284e77bff0ab8890", size = 10921299, upload-time = "2026-07-07T13:51:26.485Z" }
 wheels = [
@@ -404,6 +404,100 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/6d/b3/ed0f54ed706ec0b54fd251cc0364a249c6cd6c6ec97f04dc34be5e929eac/django_extensions-4.1.tar.gz", hash = "sha256:7b70a4d28e9b840f44694e3f7feb54f55d495f8b3fa6c5c0e5e12bcb2aa3cdeb", size = 283078, upload-time = "2025-04-11T01:15:39.617Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/64/96/d967ca440d6a8e3861120f51985d8e5aec79b9a8bdda16041206adfe7adc/django_extensions-4.1-py3-none-any.whl", hash = "sha256:0699a7af28f2523bf8db309a80278519362cd4b6e1fd0a8cd4bf063e1e023336", size = 232980, upload-time = "2025-04-11T01:15:37.701Z" },
+]
+
+[[package]]
+name = "django-picker"
+source = { editable = "." }
+dependencies = [
+    { name = "django", version = "5.2.16", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "django", version = "6.0.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "django-bootstrap5" },
+    { name = "pillow" },
+    { name = "python-dateutil" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "build" },
+    { name = "django-extensions" },
+    { name = "ipdb" },
+    { name = "ipython" },
+    { name = "pytest-clarity" },
+    { name = "pytest-sugar" },
+    { name = "ruff" },
+    { name = "twine" },
+]
+test = [
+    { name = "coverage" },
+    { name = "freezegun" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-django" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "build" },
+    { name = "django-extensions" },
+    { name = "ipdb" },
+    { name = "ipython" },
+    { name = "pytest-clarity" },
+    { name = "pytest-sugar" },
+    { name = "ruff" },
+    { name = "tox" },
+    { name = "twine" },
+]
+test = [
+    { name = "coverage" },
+    { name = "freezegun" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-django" },
+    { name = "tox" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "build", marker = "extra == 'dev'" },
+    { name = "coverage", marker = "extra == 'test'" },
+    { name = "django", specifier = ">=5.2" },
+    { name = "django-bootstrap5" },
+    { name = "django-extensions", marker = "extra == 'dev'" },
+    { name = "freezegun", marker = "extra == 'test'" },
+    { name = "ipdb", marker = "extra == 'dev'" },
+    { name = "ipython", marker = "extra == 'dev'" },
+    { name = "pillow" },
+    { name = "pytest", marker = "extra == 'test'" },
+    { name = "pytest-clarity", marker = "extra == 'dev'" },
+    { name = "pytest-cov", marker = "extra == 'test'" },
+    { name = "pytest-django", marker = "extra == 'test'" },
+    { name = "pytest-sugar", marker = "extra == 'dev'" },
+    { name = "python-dateutil", specifier = ">=2.8.1" },
+    { name = "ruff", marker = "extra == 'dev'" },
+    { name = "twine", marker = "extra == 'dev'" },
+]
+provides-extras = ["test", "dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "build" },
+    { name = "django-extensions" },
+    { name = "ipdb" },
+    { name = "ipython" },
+    { name = "pytest-clarity" },
+    { name = "pytest-sugar" },
+    { name = "ruff" },
+    { name = "tox" },
+    { name = "twine" },
+]
+test = [
+    { name = "coverage" },
+    { name = "freezegun" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-django" },
+    { name = "tox" },
 ]
 
 [[package]]
@@ -471,7 +565,7 @@ name = "importlib-metadata"
 version = "9.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "zipp", marker = "python_full_version < '3.12'" },
+    { name = "zipp" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a9/01/15bb152d77b21318514a96f43af312635eb2500c96b55398d020c93d86ea/importlib_metadata-9.0.0.tar.gz", hash = "sha256:a4f57ab599e6a2e3016d7595cfd72eb4661a5106e787a95bcc90c7105b831efc", size = 56405, upload-time = "2026-03-20T06:42:56.999Z" }
 wheels = [
@@ -714,100 +808,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/9e/c3/059298687310d527a58bb01f3b1965787ee3b40dce76752eda8b44e9a2c5/pexpect-4.9.0-py2.py3-none-any.whl", hash = "sha256:7236d1e080e4936be2dc3e326cec0af72acf9212a7e1d060210e70a47e253523", size = 63772, upload-time = "2023-11-25T06:56:14.81Z" },
-]
-
-[[package]]
-name = "picker"
-source = { editable = "." }
-dependencies = [
-    { name = "django", version = "5.2.16", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "django", version = "6.0.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "django-bootstrap5" },
-    { name = "pillow" },
-    { name = "python-dateutil" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "build" },
-    { name = "django-extensions" },
-    { name = "ipdb" },
-    { name = "ipython" },
-    { name = "pytest-clarity" },
-    { name = "pytest-sugar" },
-    { name = "ruff" },
-    { name = "twine" },
-]
-test = [
-    { name = "coverage" },
-    { name = "freezegun" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-django" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "build" },
-    { name = "django-extensions" },
-    { name = "ipdb" },
-    { name = "ipython" },
-    { name = "pytest-clarity" },
-    { name = "pytest-sugar" },
-    { name = "ruff" },
-    { name = "tox" },
-    { name = "twine" },
-]
-test = [
-    { name = "coverage" },
-    { name = "freezegun" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-django" },
-    { name = "tox" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "build", marker = "extra == 'dev'" },
-    { name = "coverage", marker = "extra == 'test'" },
-    { name = "django", specifier = ">=5.2" },
-    { name = "django-bootstrap5" },
-    { name = "django-extensions", marker = "extra == 'dev'" },
-    { name = "freezegun", marker = "extra == 'test'" },
-    { name = "ipdb", marker = "extra == 'dev'" },
-    { name = "ipython", marker = "extra == 'dev'" },
-    { name = "pillow" },
-    { name = "pytest", marker = "extra == 'test'" },
-    { name = "pytest-clarity", marker = "extra == 'dev'" },
-    { name = "pytest-cov", marker = "extra == 'test'" },
-    { name = "pytest-django", marker = "extra == 'test'" },
-    { name = "pytest-sugar", marker = "extra == 'dev'" },
-    { name = "python-dateutil", specifier = ">=2.8.1" },
-    { name = "ruff", marker = "extra == 'dev'" },
-    { name = "twine", marker = "extra == 'dev'" },
-]
-provides-extras = ["test", "dev"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "build" },
-    { name = "django-extensions" },
-    { name = "ipdb" },
-    { name = "ipython" },
-    { name = "pytest-clarity" },
-    { name = "pytest-sugar" },
-    { name = "ruff" },
-    { name = "tox" },
-    { name = "twine" },
-]
-test = [
-    { name = "coverage" },
-    { name = "freezegun" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-django" },
-    { name = "tox" },
 ]
 
 [[package]]
