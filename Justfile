@@ -44,7 +44,7 @@ test-all *args='':
     #!/usr/bin/env bash
 
     date 2>&1 | tee test-all.txt
-    for python in 3.12 3.13 3.14; do
+    for python in 3.14 3.15; do
         for django in 5.2 6.0; do
             echo "---------------------------------" 2>&1 | tee -a test-all.txt
             echo $python, $django 2>&1 | tee -a test-all.txt
@@ -59,7 +59,7 @@ test-all *args='':
 test *args='':
     #!/usr/bin/env bash
     {{TEST}} \
-        --python 3.12 \
+        --python 3.14 \
         -w "Django~=5.2" \
 
         pytest -vv -s --diff-width=60 "$@"
@@ -68,7 +68,7 @@ test *args='':
 # RE-run test suite with just previous failures
 retest:
     {{TEST}} \
-        --python 3.12 \
+        --python 3.14 \
         -w "Django~=5.2" \
         --group test \
         pytest -vv -s --diff-width=60 --lf
